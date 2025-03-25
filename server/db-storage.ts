@@ -32,6 +32,24 @@ export class DbStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
+    // Determine if we need to create a food bank for this user
+    let foodBankId = user.foodBankId;
+    
+    if (!foodBankId) {
+      // Create a default food bank for this user
+      const foodBank = await this.createFoodBank({
+        name: `${user.username}'s Food Bank`,
+        logo: null,
+        primaryColor: "#0ea5e9",
+        secondaryColor: "#22c55e",
+        thankYouMessage: "Thank you for your generous support! Your contributions make a meaningful difference in our community.",
+        thankYouVideoUrl: null
+      });
+      foodBankId = foodBank.id;
+      user.foodBankId = foodBankId;
+    }
+    
+    // Insert user with updated foodBankId
     const results = await db.insert(users).values(user).returning();
     
     // Create default user settings
