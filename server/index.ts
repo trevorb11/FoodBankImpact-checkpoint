@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeDatabase, checkDatabaseConnection } from "./db";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +38,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize the database
+  const dbConnectionStatus = await checkDatabaseConnection();
+  if (dbConnectionStatus) {
+    log("Database connection successful");
+    await initializeDatabase();
+  } else {
+    log("WARNING: Database connection failed. Some features may not work properly.");
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

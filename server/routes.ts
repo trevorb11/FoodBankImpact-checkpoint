@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
-import { csvDonorSchema, insertFoodBankSchema, insertUserSchema } from "@shared/schema";
+import { csvDonorSchema, insertFoodBankSchema, insertUserSchema, insertUserSettingsSchema } from "@shared/schema";
 import crypto from "crypto";
 import session from "express-session";
 import MemoryStore from "memorystore";
@@ -171,6 +171,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(donors);
     } catch (error) {
       return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // User Settings Routes
+  app.get('/api/my-settings', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const settings = await storage.getUserSettings(req.session.userId);
+      
+      if (!settings) {
+        return res.status(404).json({ message: 'User settings not found' });
+      }
+      
+      return res.json(settings);
+    } catch (error) {
+      return res.status(500).json({ message: 'Failed to get user settings' });
+    }
+  });
+  
+  app.post('/api/my-settings', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertUserSettingsSchema.partial().parse(req.body);
+      
+      // Ensure userId from session is used, not from request body
+      delete validatedData.userId;
+      
+      // Check if user has settings
+      let settings = await storage.getUserSettings(req.session.userId);
+      
+      if (!settings) {
+        // Create new settings
+        settings = await storage.createUserSettings({
+          ...validatedData,
+          userId: req.session.userId
+        });
+      } else {
+        // Update existing settings
+        settings = await storage.updateUserSettings(req.session.userId, validatedData);
+      }
+      
+      return res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid settings data', errors: error.errors });
+      }
+      return res.status(500).json({ message: 'Failed to update user settings' });
     }
   });
   
