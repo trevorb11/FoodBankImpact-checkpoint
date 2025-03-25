@@ -295,12 +295,12 @@ const DonorImpactExperience = () => {
         {/* Giving History Slide */}
         {SLIDES[currentSlide] === 'history' && (
           <div className="p-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center animate-fadeIn">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center animate-fade-in">
               Your Giving Journey
             </h2>
             
             <div className="space-y-6 mb-8">
-              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out transform hover:translate-x-1 animate-slideInLeft">
+              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out transform hover:translate-x-1 animate-slide-in-left">
                 <div 
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out transform hover:scale-110" 
                   style={{ backgroundColor: `${foodBank.primaryColor}20` }}
@@ -320,7 +320,7 @@ const DonorImpactExperience = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out delay-100 transform hover:translate-x-1 animate-slideInLeft" style={{ animationDelay: '100ms' }}>
+              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out delay-100 transform hover:translate-x-1 animate-slide-in-left" style={{ animationDelay: '100ms' }}>
                 <div 
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out transform hover:scale-110" 
                   style={{ backgroundColor: `${foodBank.secondaryColor}20` }}
@@ -340,7 +340,7 @@ const DonorImpactExperience = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out delay-200 transform hover:translate-x-1 animate-slideInLeft" style={{ animationDelay: '200ms' }}>
+              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out delay-200 transform hover:translate-x-1 animate-slide-in-left" style={{ animationDelay: '200ms' }}>
                 <div 
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out transform hover:scale-110" 
                   style={{ backgroundColor: `${foodBank.primaryColor}20` }}
@@ -359,7 +359,7 @@ const DonorImpactExperience = () => {
               </div>
             </div>
             
-            <div className="text-center mb-8 animate-fadeIn" style={{ animationDelay: '400ms' }}>
+            <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '400ms' }}>
               <h3 className="text-xl font-bold mb-2">Your Impact Over Time</h3>
               <p className="text-muted-foreground">
                 You've helped provide approximately {impact.meals.toLocaleString()} meals since your first gift, 
@@ -367,7 +367,7 @@ const DonorImpactExperience = () => {
               </p>
             </div>
             
-            <div className="flex justify-between animate-fadeIn" style={{ animationDelay: '500ms' }}>
+            <div className="flex justify-between animate-fade-in" style={{ animationDelay: '500ms' }}>
               <Button 
                 variant="outline"
                 onClick={goToPreviousSlide}
@@ -498,7 +498,7 @@ const DonorImpactExperience = () => {
               </div>
             </div>
             
-            <div className="rounded-lg p-4 mb-8 bg-green-50 border border-green-100 shadow-md transition-all duration-300 hover:shadow-lg animate-fadeIn" style={{ animationDelay: '400ms' }}>
+            <div className="rounded-lg p-4 mb-8 bg-green-50 border border-green-100 shadow-md transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '400ms' }}>
               <h3 className="text-lg font-medium mb-2 text-green-800">Environmental Impact</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="transition-transform duration-300 transform hover:scale-105">
@@ -524,7 +524,7 @@ const DonorImpactExperience = () => {
               </div>
             </div>
             
-            <div className="text-center mb-6 animate-fadeIn" style={{ animationDelay: '500ms' }}>
+            <div className="text-center mb-6 animate-fade-in" style={{ animationDelay: '500ms' }}>
               <p className="mb-4 text-muted-foreground">Share your impact with others</p>
               <div className="flex justify-center gap-2">
                 <Button 
@@ -568,7 +568,7 @@ const DonorImpactExperience = () => {
               </div>
             </div>
             
-            <div className="flex justify-between animate-fadeIn" style={{ animationDelay: '600ms' }}>
+            <div className="flex justify-between animate-fade-in" style={{ animationDelay: '600ms' }}>
               <Button 
                 variant="outline"
                 onClick={goToPreviousSlide}
