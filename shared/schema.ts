@@ -9,6 +9,8 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role").notNull().default("admin"),
   foodBankId: integer("foodBankId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -26,11 +28,13 @@ export const foodBanks = pgTable("foodBanks", {
   primaryColor: text("primaryColor").default("#0ea5e9"),
   secondaryColor: text("secondaryColor").default("#22c55e"),
   thankYouMessage: text("thankYouMessage").default("Thank you for your generous support! Your contributions make a meaningful difference in our community."),
-  thankYouVideoUrl: text("thankYouVideoUrl")
+  thankYouVideoUrl: text("thankYouVideoUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export const insertFoodBankSchema = createInsertSchema(foodBanks)
-  .omit({ id: true });
+  .omit({ id: true, createdAt: true, updatedAt: true });
 
 // Donor model for storing donor information
 export const donors = pgTable("donors", {
@@ -44,11 +48,30 @@ export const donors = pgTable("donors", {
   largestGift: numeric("largestGift"),
   giftCount: integer("giftCount"),
   foodBankId: integer("foodBankId").notNull(),
-  impactUrl: text("impactUrl")
+  impactUrl: text("impactUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export const insertDonorSchema = createInsertSchema(donors)
-  .omit({ id: true, impactUrl: true });
+  .omit({ id: true, impactUrl: true, createdAt: true, updatedAt: true });
+
+// User settings table for storing user preferences and customizations
+export const userSettings = pgTable("userSettings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  theme: text("theme").default("light").notNull(),
+  emailNotifications: boolean("emailNotifications").default(true).notNull(),
+  defaultView: text("defaultView").default("dashboard").notNull(),
+  dashboardLayout: text("dashboardLayout"), // JSON string of dashboard layout configuration
+  customColors: text("customColors"), // JSON string of custom color preferences
+  preferredChartType: text("preferredChartType").default("bar"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export const insertUserSettingsSchema = createInsertSchema(userSettings)
+  .omit({ id: true, createdAt: true, updatedAt: true });
 
 // CSV validation schema for uploaded donor data
 export const csvDonorSchema = z.object({
@@ -71,5 +94,8 @@ export type FoodBank = typeof foodBanks.$inferSelect;
 
 export type InsertDonor = z.infer<typeof insertDonorSchema>;
 export type Donor = typeof donors.$inferSelect;
+
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+export type UserSettings = typeof userSettings.$inferSelect;
 
 export type CsvDonor = z.infer<typeof csvDonorSchema>;

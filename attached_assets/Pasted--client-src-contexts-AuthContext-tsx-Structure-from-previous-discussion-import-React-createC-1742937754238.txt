@@ -1,0 +1,305 @@
+// client/src/contexts/AuthContext.tsx (Structure from previous discussion)
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import * as api from '../api'; // Your API client functions
+import { LoginInput, RegisterInput } from '../../../shared/schema'; // Import shared types
+
+interface User { id: string; email: string; foodBankName: string; /* other fields */ }
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  login: (credentials: LoginInput) => Promise<void>;
+  register: (data: RegisterInput) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for existing session/token on initial load
+    const checkAuth = async () => {
+      setIsLoading(true);
+      try {
+        const currentUser = await api.getCurrentUser(); // API call to /api/auth/me
+        setUser(currentUser);
+      } catch (error) {
+        setUser(null); // Not authenticated
+        console.error("Auth check failed:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const login = async (credentials: LoginInput) => {
+    setIsLoading(true);
+    try {
+      const loggedInUser = await api.login(credentials);
+      setUser(loggedInUser);
+    } catch (error) {
+      console.error("Login failed:", error);
+      setUser(null);
+      throw error; // Re-throw to handle in component
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (data: RegisterInput) => {
+     // Similar logic using api.register
+     setIsLoading(true);
+     try {
+        const registeredUser = await api.register(data);
+        setUser(registeredUser); // Or maybe redirect to login after register
+     } catch (error) {
+        console.error("Registration failed:", error);
+        setUser(null);
+        throw error;
+     } finally {
+        setIsLoading(false);
+     }
+  };
+
+
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await api.logout();
+      setUser(null);
+       // Clear any stored token/session info here
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Decide how to handle logout errors
+    } finally {
+       setIsLoading(false);
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// client/src/components/layouts/AdminLayout.tsx (Structure from previous discussion)
+import React, { ReactNode } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom'; // Or Next.js router
+import { useIsMobile } from '../../hooks/useIsMobile'; // Your custom hook
+// Import other UI components (Sidebar, Header, etc.)
+
+interface AdminLayoutProps {
+  children: ReactNode;
+}
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const { user, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile(); // Example usage
+
+  React.useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/login'); // Redirect if not logged in
+    }
+  }, [user, isLoading, navigate]);
+
+  if (isLoading || !user) {
+    // Show loading spinner or skeleton screen
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      {/* {!isMobile && <AdminSidebar />} */}
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow p-4 flex justify-between items-center">
+          <span>Welcome, {user.email} ({user.foodBankName})</span>
+          <button onClick={logout} className="text-sm text-blue-600 hover:underline">Logout</button>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
+          {children}
+        </main>
+      </div>
+       {/* Mobile Navigation could go here */}
+    </div>
+  );
+};
+
+export default AdminLayout;
+
+// client/src/pages/Impact/[linkId].tsx (Example Donor Page - Next.js style)
+import { useRouter } from 'next/router';
+import React, { useState, useEffect } from 'react';
+import * as api from '../../api'; // API client
+import { ImpactData } from '../../../../shared/schema';
+import { FEEDING_AMERICA_METRICS } from '../../../../shared/constants';
+
+// Import Slide Components
+import WelcomeSlide from '../../components/donor/WelcomeSlide';
+import MealsProvidedSlide from '../../components/donor/MealsProvidedSlide';
+import PeopleHelpedSlide from '../../components/donor/PeopleHelpedSlide';
+// ... import other slides
+
+const slideComponents = [
+    WelcomeSlide,
+    MealsProvidedSlide,
+    PeopleHelpedSlide,
+    // GivingHistorySlide,
+    // ThankYouSlide,
+    // SummarySlide,
+];
+
+const ImpactJourneyPage = () => {
+  const router = useRouter();
+  const { linkId } = router.query;
+  const [impactData, setImpactData] = useState<ImpactData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  useEffect(() => {
+    if (linkId && typeof linkId === 'string') {
+      setLoading(true);
+      setError(null);
+      api.getImpactData(linkId)
+        .then(data => {
+          setImpactData(data);
+        })
+        .catch(err => {
+          console.error("Failed to load impact data:", err);
+          setError("Sorry, we couldn't load your impact information.");
+        })
+        .finally(() => setLoading(false));
+    } else if (router.isReady) {
+        // Handle case where linkId is missing or invalid after router is ready
+        setError("Invalid link.");
+        setLoading(false);
+    }
+  }, [linkId, router.isReady]);
+
+  const calculateImpact = (donation: number) => {
+    const meals = donation * FEEDING_AMERICA_METRICS.DOLLAR_TO_MEALS;
+    const peopleHelpedMonths = Math.floor(meals / FEEDING_AMERICA_METRICS.MEALS_TO_PERSON_MONTH);
+    const pounds = meals * FEEDING_AMERICA_METRICS.POUNDS_TO_MEAL;
+    const co2Saved = pounds * FEEDING_AMERICA_METRICS.POUNDS_TO_CO2_SAVED;
+    const waterSaved = pounds * FEEDING_AMERICA_METRICS.POUNDS_TO_WATER_SAVED;
+    return { meals, peopleHelpedMonths, pounds, co2Saved, waterSaved };
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlideIndex(prev => Math.min(prev + 1, slideComponents.length - 1));
+  };
+  const handlePrevSlide = () => {
+     setCurrentSlideIndex(prev => Math.max(prev - 1, 0));
+  };
+
+
+  if (loading) return <div className="flex justify-center items-center h-screen">Loading Impact...</div>;
+  if (error) return <div className="flex justify-center items-center h-screen text-red-600">{error}</div>;
+  if (!impactData) return <div className="flex justify-center items-center h-screen">Impact data not found.</div>;
+
+  const calculated = calculateImpact(impactData.totalDonation);
+  const CurrentSlide = slideComponents[currentSlideIndex];
+
+  const slideProps = {
+      donorName: impactData.donorName,
+      foodBank: impactData.foodBank,
+      totalDonation: impactData.totalDonation,
+      ...calculated, // Pass calculated metrics
+      onNext: handleNextSlide,
+      onPrev: handlePrevSlide, // Pass navigation functions
+      isFirstSlide: currentSlideIndex === 0,
+      isLastSlide: currentSlideIndex === slideComponents.length - 1,
+      // Pass other needed props like history data
+  };
+
+
+  return (
+    <div className="relative w-full h-screen overflow-hidden">
+       {/* Render the current slide, passing necessary data and handlers */}
+       <CurrentSlide {...slideProps} />
+       {/* You might add global navigation buttons or progress indicators here */}
+    </div>
+  );
+};
+
+export default ImpactJourneyPage;
+
+
+// client/src/components/donor/MealsProvidedSlide.tsx (Example Slide)
+import React from 'react';
+import { FoodBankSettings } from '../../../../shared/schema'; // Adjust path as needed
+// Import animation library or use Tailwind animations
+
+interface MealsProvidedSlideProps {
+  donorName: string;
+  meals: number;
+  foodBank: Omit<FoodBankSettings, 'id'>;
+  onNext: () => void;
+  onPrev: () => void;
+  // Add other props from slideProps if needed
+}
+
+const MealsProvidedSlide: React.FC<MealsProvidedSlideProps> = ({
+  donorName,
+  meals,
+  foodBank,
+  onNext,
+  onPrev,
+}) => {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-blue-100 to-indigo-200 p-8 text-center animate-fadeIn">
+       {/* Use foodBank.logoUrl, foodBank.primaryColor etc for branding */}
+       {foodBank.logoUrl && <img src={foodBank.logoUrl} alt={`${foodBank.name} Logo`} className="max-h-20 mb-6"/>}
+
+      <h2 className="text-2xl md:text-4xl font-light mb-4 text-gray-700">Because of you, {donorName},</h2>
+      <div className="my-8 animate-slideInUp">
+        <span className="text-6xl md:text-8xl font-bold text-indigo-600" style={{color: foodBank.primaryColor || 'indigo'}}>
+          {/* Add Counter Animation Here */}
+          {Math.round(meals).toLocaleString()}
+        </span>
+        <p className="text-2xl md:text-3xl font-light text-gray-600 mt-2">meals were provided!</p>
+      </div>
+      <p className="text-lg md:text-xl text-gray-500 max-w-md">
+        That's incredible! Each meal makes a difference for neighbors facing hunger right here in our community.
+      </p>
+
+       {/* Navigation Buttons */}
+      <div className="absolute bottom-10 left-0 right-0 flex justify-center gap-4 px-4">
+         <button
+            onClick={onPrev}
+            className="px-6 py-2 bg-white text-gray-600 rounded-full shadow hover:bg-gray-50 transition duration-200"
+        >
+            Back
+        </button>
+        <button
+            onClick={onNext}
+            style={{backgroundColor: foodBank.primaryColor || 'indigo'}}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-full shadow hover:bg-indigo-700 transition duration-200"
+        >
+            Next: Who You Helped
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default MealsProvidedSlide;
