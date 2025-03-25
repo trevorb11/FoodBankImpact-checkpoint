@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { 
   LayoutGrid, 
@@ -9,11 +9,13 @@ import {
   Menu, 
   X, 
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AdminLayoutProps = {
   children: React.ReactNode;
@@ -24,6 +26,14 @@ const AdminLayout = ({ children, activeTab = 'dashboard' }: AdminLayoutProps) =>
   const [, setLocation] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user, logout, loading, isAuthenticated } = useAuth();
+  
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      setLocation('/auth/login');
+    }
+  }, [loading, isAuthenticated, setLocation]);
   
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutGrid className="h-5 w-5" />, path: '/admin', id: 'dashboard' },
@@ -33,9 +43,31 @@ const AdminLayout = ({ children, activeTab = 'dashboard' }: AdminLayoutProps) =>
     { name: 'Preview', icon: <Eye className="h-5 w-5" />, path: '/admin/preview', id: 'preview' },
   ];
   
+  const handleLogout = async () => {
+    await logout();
+    setLocation('/auth/login');
+  };
+  
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+  
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Prevent rendering the layout if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
   
   return (
     <div className="min-h-screen bg-muted/30 flex">
@@ -79,40 +111,45 @@ const AdminLayout = ({ children, activeTab = 'dashboard' }: AdminLayoutProps) =>
         <div className="flex-1 overflow-y-auto py-4">
           <nav className="space-y-1 px-2">
             {menuItems.map((item) => (
-              <Link 
-                key={item.id}
-                href={item.path}
-              >
-                <a 
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md group",
-                    activeTab === item.id 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                  onClick={() => {
-                    if (isMobile) setSidebarOpen(false);
-                  }}
+              <div key={item.id}>
+                <Link 
+                  href={item.path}
                 >
-                  {item.icon}
-                  <span className="ml-3">{item.name}</span>
-                  {(item.id === 'upload' || item.id === 'configure' || item.id === 'distribute' || item.id === 'preview') && (
-                    <ChevronRight 
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        activeTab === item.id ? "text-primary" : "text-muted-foreground"
-                      )}
-                    />
-                  )}
-                </a>
-              </Link>
+                  <div 
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm font-medium rounded-md group cursor-pointer",
+                      activeTab === item.id 
+                        ? "bg-primary/10 text-primary" 
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                    onClick={() => {
+                      if (isMobile) setSidebarOpen(false);
+                    }}
+                  >
+                    {item.icon}
+                    <span className="ml-3">{item.name}</span>
+                    {(item.id === 'upload' || item.id === 'configure' || item.id === 'distribute' || item.id === 'preview') && (
+                      <ChevronRight 
+                        className={cn(
+                          "ml-auto h-4 w-4",
+                          activeTab === item.id ? "text-primary" : "text-muted-foreground"
+                        )}
+                      />
+                    )}
+                  </div>
+                </Link>
+              </div>
             ))}
           </nav>
         </div>
         
         {/* Footer */}
         <div className="border-t p-4">
-          <Button variant="ghost" className="w-full justify-start text-muted-foreground">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground"
+            onClick={handleLogout}
+          >
             <LogOut className="mr-2 h-5 w-5" />
             Sign Out
           </Button>
