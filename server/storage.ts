@@ -7,7 +7,10 @@ import {
   type InsertFoodBank,
   donors,
   type Donor,
-  type InsertDonor
+  type InsertDonor,
+  userSettings,
+  type UserSettings,
+  type InsertUserSettings
 } from "@shared/schema";
 
 // Storage interface with CRUD methods
@@ -16,6 +19,11 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  // User Settings methods
+  getUserSettings(userId: number): Promise<UserSettings | undefined>;
+  createUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
+  updateUserSettings(userId: number, settings: Partial<InsertUserSettings>): Promise<UserSettings | undefined>;
   
   // FoodBank methods
   getFoodBank(id: number): Promise<FoodBank | undefined>;
@@ -36,19 +44,23 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private foodBanks: Map<number, FoodBank>;
   private donors: Map<number, Donor>;
+  private userSettingsMap: Map<number, UserSettings>;
   
   userCurrentId: number;
   foodBankCurrentId: number;
   donorCurrentId: number;
+  userSettingsCurrentId: number;
 
   constructor() {
     this.users = new Map();
     this.foodBanks = new Map();
     this.donors = new Map();
+    this.userSettingsMap = new Map();
     
     this.userCurrentId = 1;
     this.foodBankCurrentId = 1;
     this.donorCurrentId = 1;
+    this.userSettingsCurrentId = 1;
     
     // Initialize with a default food bank
     this.createFoodBank({
@@ -74,6 +86,7 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
+    const now = new Date();
     
     // Determine if we need to create a food bank for this user
     let foodBankId = insertUser.foodBankId;
@@ -96,11 +109,67 @@ export class MemStorage implements IStorage {
       username: insertUser.username,
       password: insertUser.password,
       role: insertUser.role ?? "admin",
-      foodBankId
+      foodBankId,
+      createdAt: now,
+      updatedAt: now
     };
     
     this.users.set(id, user);
+    
+    // Create default user settings for the new user
+    await this.createUserSettings({
+      userId: id,
+      theme: "light",
+      emailNotifications: true,
+      defaultView: "dashboard"
+    });
+    
     return user;
+  }
+  
+  // User Settings methods
+  async getUserSettings(userId: number): Promise<UserSettings | undefined> {
+    return Array.from(this.userSettingsMap.values()).find(
+      (settings) => settings.userId === userId
+    );
+  }
+  
+  async createUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
+    const id = this.userSettingsCurrentId++;
+    const now = new Date();
+    
+    const userSettings: UserSettings = {
+      id,
+      userId: settings.userId,
+      theme: settings.theme || "light",
+      emailNotifications: settings.emailNotifications ?? true,
+      defaultView: settings.defaultView || "dashboard",
+      dashboardLayout: settings.dashboardLayout || null,
+      customColors: settings.customColors || null,
+      preferredChartType: settings.preferredChartType || "bar",
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.userSettingsMap.set(id, userSettings);
+    return userSettings;
+  }
+  
+  async updateUserSettings(userId: number, settings: Partial<InsertUserSettings>): Promise<UserSettings | undefined> {
+    const existingSettings = Array.from(this.userSettingsMap.values()).find(
+      (s) => s.userId === userId
+    );
+    
+    if (!existingSettings) return undefined;
+    
+    const updatedSettings = {
+      ...existingSettings,
+      ...settings,
+      updatedAt: new Date()
+    };
+    
+    this.userSettingsMap.set(existingSettings.id, updatedSettings);
+    return updatedSettings;
   }
   
   // FoodBank methods
@@ -110,6 +179,8 @@ export class MemStorage implements IStorage {
   
   async createFoodBank(insertFoodBank: InsertFoodBank): Promise<FoodBank> {
     const id = this.foodBankCurrentId++;
+    const now = new Date();
+    
     const foodBank: FoodBank = { 
       id,
       name: insertFoodBank.name,
@@ -117,7 +188,9 @@ export class MemStorage implements IStorage {
       primaryColor: insertFoodBank.primaryColor ?? null,
       secondaryColor: insertFoodBank.secondaryColor ?? null,
       thankYouMessage: insertFoodBank.thankYouMessage ?? null,
-      thankYouVideoUrl: insertFoodBank.thankYouVideoUrl ?? null
+      thankYouVideoUrl: insertFoodBank.thankYouVideoUrl ?? null,
+      createdAt: now,
+      updatedAt: now
     };
     this.foodBanks.set(id, foodBank);
     return foodBank;
@@ -129,7 +202,8 @@ export class MemStorage implements IStorage {
     
     const updatedFoodBank = { 
       ...existingFoodBank, 
-      ...foodBank 
+      ...foodBank,
+      updatedAt: new Date()
     };
     
     this.foodBanks.set(id, updatedFoodBank);
@@ -161,6 +235,8 @@ export class MemStorage implements IStorage {
   
   async createDonor(insertDonor: InsertDonor & { impactUrl?: string }): Promise<Donor> {
     const id = this.donorCurrentId++;
+    const now = new Date();
+    
     const donor: Donor = {
       id,
       firstName: insertDonor.firstName,
@@ -172,7 +248,9 @@ export class MemStorage implements IStorage {
       lastGiftDate: insertDonor.lastGiftDate ?? null,
       largestGift: insertDonor.largestGift ?? null,
       giftCount: insertDonor.giftCount ?? null,
-      impactUrl: insertDonor.impactUrl ?? null
+      impactUrl: insertDonor.impactUrl ?? null,
+      createdAt: now,
+      updatedAt: now
     };
     this.donors.set(id, donor);
     return donor;
@@ -195,7 +273,8 @@ export class MemStorage implements IStorage {
     
     const updatedDonor = { 
       ...existingDonor, 
-      ...donor 
+      ...donor,
+      updatedAt: new Date()
     };
     
     this.donors.set(id, updatedDonor);
@@ -203,4 +282,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Import database storage implementation
+import { dbStorage } from './db-storage';
+
+// Export database storage as the main storage
+export const storage = dbStorage;
