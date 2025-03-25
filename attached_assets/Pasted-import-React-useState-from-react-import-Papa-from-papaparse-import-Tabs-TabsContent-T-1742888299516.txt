@@ -1,0 +1,541 @@
+import React, { useState } from 'react';
+import Papa from 'papaparse';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/alert';
+import { Loader2, Upload, FileCheck, Copy, Download, ExternalLink } from 'lucide-react';
+
+// Feeding America standard conversion factors
+const IMPACT_FORMULAS = {
+  DOLLARS_TO_MEALS: 10, // $1 = 10 meals (Feeding America standard)
+  MEALS_TO_PEOPLE: 12,  // Average 12 meals to help 1 person for a month
+  POUNDS_TO_MEALS: 1.2, // 1.2 pounds = 1 meal
+  CO2_PER_POUND: 2.5,   // 2.5 lbs of CO2 saved per pound of food rescued
+  WATER_PER_POUND: 108, // 108 gallons of water saved per pound of food rescued
+};
+
+const FoodBankImpactWrapped = () => {
+  const [activeTab, setActiveTab] = useState('upload');
+  const [fileName, setFileName] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [donorLinks, setDonorLinks] = useState([]);
+  const [foodBankInfo, setFoodBankInfo] = useState({
+    name: '',
+    logo: '',
+    primaryColor: '#0ea5e9',
+    secondaryColor: '#22c55e',
+    thankYouMessage: 'Thank you for your generous support! Your contributions make a meaningful difference in our community.',
+    thankYouVideoUrl: ''
+  });
+  
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setFileName(file.name);
+    setIsUploading(true);
+    
+    // Simulate file upload processing
+    setTimeout(() => {
+      setIsUploading(false);
+      
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          setTotalRecords(results.data.length);
+          // Move to next step after successful upload
+          setActiveTab('configure');
+        },
+        error: (error) => {
+          console.error('Error parsing CSV:', error);
+          alert('Error parsing CSV file. Please check the format and try again.');
+        }
+      });
+    }, 1500);
+  };
+  
+  const handleInfoChange = (e) => {
+    const { name, value } = e.target;
+    setFoodBankInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const generateDonorLinks = () => {
+    setIsProcessing(true);
+    setProcessedCount(0);
+    
+    // Simulate processing time
+    const interval = setInterval(() => {
+      setProcessedCount(prev => {
+        const next = prev + Math.floor(Math.random() * 10) + 1;
+        return next > totalRecords ? totalRecords : next;
+      });
+    }, 300);
+    
+    // After "processing" complete
+    setTimeout(() => {
+      clearInterval(interval);
+      setIsProcessing(false);
+      setProcessedCount(totalRecords);
+      
+      // Generate sample links for demonstration
+      const links = [];
+      for (let i = 1; i <= 5; i++) {
+        links.push({
+          name: `John Doe ${i}`,
+          email: `donor${i}@example.com`,
+          amount: (Math.random() * 500 + 100).toFixed(2),
+          url: `https://impact.yourfoodbank.org/${btoa(`donor${i}@example.com`)}`,
+        });
+      }
+      setDonorLinks(links);
+      setActiveTab('distribute');
+    }, 5000);
+  };
+  
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+  };
+  
+  const calculateImpact = (dollarAmount) => {
+    const meals = dollarAmount * IMPACT_FORMULAS.DOLLARS_TO_MEALS;
+    const people = Math.ceil(meals / IMPACT_FORMULAS.MEALS_TO_PEOPLE);
+    return { meals: Math.round(meals), people };
+  };
+  
+  const downloadCSV = () => {
+    const headers = ['Name', 'Email', 'Amount', 'Meals Provided', 'People Helped', 'Impact URL'];
+    const data = donorLinks.map(donor => {
+      const impact = calculateImpact(donor.amount);
+      return [
+        donor.name,
+        donor.email,
+        donor.amount,
+        impact.meals,
+        impact.people,
+        donor.url
+      ];
+    });
+    
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'donor_impact_links.csv');
+    link.click();
+  };
+  
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Food Bank Impact Wrapped</h1>
+        <p className="text-gray-600">Transform your donor data into engaging, shareable impact stories</p>
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-3 mb-8">
+          <TabsTrigger value="upload">1. Upload Data</TabsTrigger>
+          <TabsTrigger value="configure" disabled={!fileName}>2. Configure Experience</TabsTrigger>
+          <TabsTrigger value="distribute" disabled={!processedCount}>3. Distribute Links</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upload" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload Your Donor Data</CardTitle>
+              <CardDescription>
+                Upload a CSV file with your donor information. We need at minimum: donor name, 
+                email, donation amount, and first donation date.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed rounded-lg p-10 text-center">
+                {!fileName ? (
+                  <>
+                    <Upload className="h-10 w-10 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Drag and drop your CSV file here, or click to browse</p>
+                    <input 
+                      type="file" 
+                      id="file-upload" 
+                      className="hidden" 
+                      accept=".csv" 
+                      onChange={handleFileUpload}
+                    />
+                    <Button 
+                      onClick={() => document.getElementById('file-upload').click()}
+                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                      Browse Files
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-10 w-10 text-blue-500 mx-auto mb-4 animate-spin" />
+                        <p className="text-gray-600">Uploading file...</p>
+                      </>
+                    ) : (
+                      <>
+                        <FileCheck className="h-10 w-10 text-green-500 mx-auto mb-4" />
+                        <p className="text-gray-800 font-medium mb-1">{fileName}</p>
+                        <p className="text-gray-600">{totalRecords} donor records detected</p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button 
+                className="text-gray-500 border border-gray-300 px-4 py-2 rounded hover:bg-gray-50"
+                onClick={() => {
+                  setFileName('');
+                  setTotalRecords(0);
+                }}
+                disabled={!fileName || isUploading}
+              >
+                Clear
+              </Button>
+              <Button 
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={() => setActiveTab('configure')}
+                disabled={!fileName || isUploading || !totalRecords}
+              >
+                Continue
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Sample CSV Format</CardTitle>
+              <CardDescription>
+                Download our template or ensure your CSV has the following columns
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2 text-left">first_name</th>
+                      <th className="border p-2 text-left">last_name</th>
+                      <th className="border p-2 text-left">email</th>
+                      <th className="border p-2 text-left">total_giving</th>
+                      <th className="border p-2 text-left">first_gift_date</th>
+                      <th className="border p-2 text-left">last_gift_date</th>
+                      <th className="border p-2 text-left">largest_gift</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border p-2">John</td>
+                      <td className="border p-2">Doe</td>
+                      <td className="border p-2">john@example.com</td>
+                      <td className="border p-2">250.00</td>
+                      <td className="border p-2">2023-01-15</td>
+                      <td className="border p-2">2023-12-01</td>
+                      <td className="border p-2">100.00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="flex items-center gap-2 text-blue-500">
+                <Download className="h-4 w-4" /> Download Template
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="configure">
+          <Card>
+            <CardHeader>
+              <CardTitle>Customize Your Impact Experience</CardTitle>
+              <CardDescription>
+                Add your food bank's information to personalize the donor experience
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Food Bank Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={foodBankInfo.name}
+                    onChange={handleInfoChange}
+                    placeholder="Community Food Bank"
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Logo URL
+                  </label>
+                  <input
+                    type="text"
+                    name="logo"
+                    value={foodBankInfo.logo}
+                    onChange={handleInfoChange}
+                    placeholder="https://example.com/logo.png"
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Primary Color
+                  </label>
+                  <div className="flex items-center">
+                    <input
+                      type="color"
+                      name="primaryColor"
+                      value={foodBankInfo.primaryColor}
+                      onChange={handleInfoChange}
+                      className="w-10 h-10 border-0 p-0 mr-2"
+                    />
+                    <input
+                      type="text"
+                      value={foodBankInfo.primaryColor}
+                      onChange={handleInfoChange}
+                      name="primaryColor"
+                      className="flex-1 px-3 py-2 border rounded-md"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Secondary Color
+                  </label>
+                  <div className="flex items-center">
+                    <input
+                      type="color"
+                      name="secondaryColor"
+                      value={foodBankInfo.secondaryColor}
+                      onChange={handleInfoChange}
+                      className="w-10 h-10 border-0 p-0 mr-2"
+                    />
+                    <input
+                      type="text"
+                      value={foodBankInfo.secondaryColor}
+                      onChange={handleInfoChange}
+                      name="secondaryColor"
+                      className="flex-1 px-3 py-2 border rounded-md"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Thank You Message
+                </label>
+                <textarea
+                  name="thankYouMessage"
+                  value={foodBankInfo.thankYouMessage}
+                  onChange={handleInfoChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border rounded-md"
+                ></textarea>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Thank You Video URL (optional)
+                </label>
+                <input
+                  type="text"
+                  name="thankYouVideoUrl"
+                  value={foodBankInfo.thankYouVideoUrl}
+                  onChange={handleInfoChange}
+                  placeholder="https://youtube.com/watch?v=..."
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button 
+                className="text-gray-500 border border-gray-300 px-4 py-2 rounded hover:bg-gray-50"
+                onClick={() => setActiveTab('upload')}
+              >
+                Back
+              </Button>
+              <Button 
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={generateDonorLinks}
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Processing...' : 'Generate Donor Links'}
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          {isProcessing && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle>Processing Donor Data</CardTitle>
+                <CardDescription>
+                  Generating personalized impact links for your donors
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-500 h-2.5 rounded-full"
+                      style={{ width: `${(processedCount / totalRecords) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-center text-gray-600">
+                    Processed {processedCount} of {totalRecords} donors
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="distribute">
+          <Card>
+            <CardHeader>
+              <CardTitle>Donor Impact Links</CardTitle>
+              <CardDescription>
+                Share these personalized links with your donors to show them their impact
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2 text-left">Donor</th>
+                      <th className="border p-2 text-left">Email</th>
+                      <th className="border p-2 text-left">Donation</th>
+                      <th className="border p-2 text-left">Impact</th>
+                      <th className="border p-2 text-left">Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {donorLinks.map((donor, index) => {
+                      const impact = calculateImpact(donor.amount);
+                      return (
+                        <tr key={index}>
+                          <td className="border p-2">{donor.name}</td>
+                          <td className="border p-2">{donor.email}</td>
+                          <td className="border p-2">${donor.amount}</td>
+                          <td className="border p-2">
+                            {impact.meals} meals<br />
+                            {impact.people} people helped
+                          </td>
+                          <td className="border p-2">
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                className="p-1 text-blue-500 hover:text-blue-700"
+                                onClick={() => copyToClipboard(donor.url)}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                className="p-1 text-blue-500 hover:text-blue-700"
+                                onClick={() => window.open(donor.url, '_blank')}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button 
+                className="text-gray-500 border border-gray-300 px-4 py-2 rounded hover:bg-gray-50"
+                onClick={() => setActiveTab('configure')}
+              >
+                Back
+              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2"
+                  onClick={downloadCSV}
+                >
+                  <Download className="h-4 w-4" />
+                  Download CSV
+                </Button>
+                <Button 
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  onClick={() => {
+                    // In a real app, this would trigger an email sending flow
+                    alert("In a production environment, this would send emails to all donors with their personalized impact links");
+                  }}
+                >
+                  Email to Donors
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
+          
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Preview Donor Experience</CardTitle>
+              <CardDescription>
+                See what your donors will experience when they click their personalized link
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <img 
+                src="/api/placeholder/800/500" 
+                alt="Preview of donor impact experience" 
+                className="rounded-lg shadow-lg mx-auto mb-4"
+              />
+              <Button 
+                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 inline-flex items-center gap-2"
+                onClick={() => {
+                  // In a real app, this would open a preview of the donor experience
+                  alert("This would open a preview of the donor impact experience");
+                }}
+              >
+                <ExternalLink className="h-5 w-5" />
+                Preview Live Experience
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+        <h3 className="text-lg font-medium text-blue-800 mb-2">Using Feeding America Impact Metrics</h3>
+        <p className="text-blue-700 mb-4">
+          This platform uses standardized Feeding America conversion metrics to ensure consistency:
+        </p>
+        <ul className="list-disc pl-6 text-blue-700 space-y-1">
+          <li>$1 = {IMPACT_FORMULAS.DOLLARS_TO_MEALS} meals provided</li>
+          <li>12 meals = helping 1 person for a month</li>
+          <li>1.2 pounds of food = 1 meal</li>
+          <li>Each pound of food rescued saves 2.5 lbs of CO₂ emissions</li>
+          <li>Each pound of food rescued saves 108 gallons of water</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+export default FoodBankImpactWrapped;
