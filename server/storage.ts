@@ -74,7 +74,31 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id };
+    
+    // Determine if we need to create a food bank for this user
+    let foodBankId = insertUser.foodBankId;
+    
+    if (!foodBankId) {
+      // Create a default food bank for this user
+      const foodBank = await this.createFoodBank({
+        name: `${insertUser.username}'s Food Bank`,
+        logo: null,
+        primaryColor: "#0ea5e9",
+        secondaryColor: "#22c55e",
+        thankYouMessage: "Thank you for your generous support! Your contributions make a meaningful difference in our community.",
+        thankYouVideoUrl: null
+      });
+      foodBankId = foodBank.id;
+    }
+    
+    const user: User = { 
+      id,
+      username: insertUser.username,
+      password: insertUser.password,
+      role: insertUser.role ?? "admin",
+      foodBankId
+    };
+    
     this.users.set(id, user);
     return user;
   }
@@ -137,7 +161,19 @@ export class MemStorage implements IStorage {
   
   async createDonor(insertDonor: InsertDonor & { impactUrl?: string }): Promise<Donor> {
     const id = this.donorCurrentId++;
-    const donor: Donor = { ...insertDonor, id };
+    const donor: Donor = {
+      id,
+      firstName: insertDonor.firstName,
+      lastName: insertDonor.lastName,
+      email: insertDonor.email,
+      totalGiving: insertDonor.totalGiving,
+      foodBankId: insertDonor.foodBankId,
+      firstGiftDate: insertDonor.firstGiftDate ?? null,
+      lastGiftDate: insertDonor.lastGiftDate ?? null,
+      largestGift: insertDonor.largestGift ?? null,
+      giftCount: insertDonor.giftCount ?? null,
+      impactUrl: insertDonor.impactUrl ?? null
+    };
     this.donors.set(id, donor);
     return donor;
   }
