@@ -64,6 +64,24 @@ export class DbStorage implements IStorage {
     
     return results[0];
   }
+  
+  async updateUser(id: number, updateData: Partial<InsertUser>): Promise<User | undefined> {
+    // Check if user exists first
+    const existingUser = await this.getUser(id);
+    if (!existingUser) return undefined;
+    
+    // Update the user
+    const results = await db
+      .update(users)
+      .set({
+        ...updateData,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+      
+    return results[0];
+  }
 
   // User Settings methods
   async getUserSettings(userId: number): Promise<UserSettings | undefined> {
