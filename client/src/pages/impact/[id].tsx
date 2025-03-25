@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CountUp } from '@/components/ui/count-up';
 import { IMPACT_FORMULAS } from '@/lib/constants';
 import { calculateImpactMetrics } from '@/lib/utils';
-import { ChevronRight, ChevronLeft, Heart, Share2, Twitter, Facebook, Linkedin, Copy } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Heart, Share2, Twitter, Facebook, Linkedin, Copy, Check } from 'lucide-react';
 
 // Slides in the experience
 const SLIDES = [
@@ -295,14 +295,14 @@ const DonorImpactExperience = () => {
         {/* Giving History Slide */}
         {SLIDES[currentSlide] === 'history' && (
           <div className="p-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center animate-fadeIn">
               Your Giving Journey
             </h2>
             
             <div className="space-y-6 mb-8">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out transform hover:translate-x-1 animate-slideInLeft">
                 <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center" 
+                  className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out transform hover:scale-110" 
                   style={{ backgroundColor: `${foodBank.primaryColor}20` }}
                 >
                   <span 
@@ -320,9 +320,9 @@ const DonorImpactExperience = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out delay-100 transform hover:translate-x-1 animate-slideInLeft" style={{ animationDelay: '100ms' }}>
                 <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center" 
+                  className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out transform hover:scale-110" 
                   style={{ backgroundColor: `${foodBank.secondaryColor}20` }}
                 >
                   <span 
@@ -340,9 +340,9 @@ const DonorImpactExperience = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 transition-all duration-500 ease-in-out delay-200 transform hover:translate-x-1 animate-slideInLeft" style={{ animationDelay: '200ms' }}>
                 <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center" 
+                  className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-300 ease-in-out transform hover:scale-110" 
                   style={{ backgroundColor: `${foodBank.primaryColor}20` }}
                 >
                   <Heart 
@@ -359,7 +359,7 @@ const DonorImpactExperience = () => {
               </div>
             </div>
             
-            <div className="text-center mb-8">
+            <div className="text-center mb-8 animate-fadeIn" style={{ animationDelay: '400ms' }}>
               <h3 className="text-xl font-bold mb-2">Your Impact Over Time</h3>
               <p className="text-muted-foreground">
                 You've helped provide approximately {impact.meals.toLocaleString()} meals since your first gift, 
@@ -367,16 +367,16 @@ const DonorImpactExperience = () => {
               </p>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between animate-fadeIn" style={{ animationDelay: '500ms' }}>
               <Button 
                 variant="outline"
                 onClick={goToPreviousSlide}
-                className="inline-flex items-center"
+                className="inline-flex items-center hover:scale-105 transition-transform duration-200"
               >
                 <ChevronLeft className="mr-2 h-5 w-5" /> Back
               </Button>
               <Button 
-                className="inline-flex items-center text-white"
+                className="inline-flex items-center text-white hover:scale-105 transition-transform duration-200"
                 style={{ backgroundColor: foodBank.primaryColor }}
                 onClick={goToNextSlide}
               >
@@ -390,26 +390,26 @@ const DonorImpactExperience = () => {
         {SLIDES[currentSlide] === 'thanks' && (
           <div className="p-8 text-center">
             <div 
-              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse transition-transform duration-700 transform hover:scale-110" 
               style={{ backgroundColor: `${foodBank.primaryColor}20` }}
             >
               <Heart 
-                className="h-8 w-8" 
+                className="h-8 w-8 animate-heartbeat" 
                 style={{ color: foodBank.primaryColor }} 
               />
             </div>
             
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 animate-fadeIn">
               Thank You, {donor.firstName}!
             </h2>
             
-            <div className="max-w-lg mx-auto mb-8">
+            <div className="max-w-lg mx-auto mb-8 animate-fadeIn" style={{ animationDelay: '200ms' }}>
               <p className="text-lg leading-relaxed mb-6">
                 {foodBank.thankYouMessage}
               </p>
               
               {foodBank.thankYouVideoUrl && (
-                <div className="aspect-video bg-muted w-full rounded-lg flex items-center justify-center mb-6">
+                <div className="aspect-video bg-muted w-full rounded-lg flex items-center justify-center mb-6 animate-fadeIn shadow-lg transition-transform duration-300 transform hover:scale-102" style={{ animationDelay: '400ms' }}>
                   <iframe 
                     className="w-full h-full rounded-lg"
                     src={foodBank.thankYouVideoUrl}
@@ -422,16 +422,16 @@ const DonorImpactExperience = () => {
               )}
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between animate-fadeIn" style={{ animationDelay: '500ms' }}>
               <Button 
                 variant="outline"
                 onClick={goToPreviousSlide}
-                className="inline-flex items-center"
+                className="inline-flex items-center hover:scale-105 transition-transform duration-200"
               >
                 <ChevronLeft className="mr-2 h-5 w-5" /> Back
               </Button>
               <Button 
-                className="inline-flex items-center text-white"
+                className="inline-flex items-center text-white hover:scale-105 transition-transform duration-200"
                 style={{ backgroundColor: foodBank.primaryColor }}
                 onClick={goToNextSlide}
               >
@@ -444,95 +444,141 @@ const DonorImpactExperience = () => {
         {/* Summary Slide */}
         {SLIDES[currentSlide] === 'summary' && (
           <div className="p-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center animate-fadeIn">
               Your 2023 Impact Summary
             </h2>
             
             <div className="grid md:grid-cols-2 gap-4 mb-8">
               <div 
-                className="rounded-lg p-4 text-center" 
-                style={{ backgroundColor: `${foodBank.primaryColor}20` }}
+                className="rounded-lg p-4 text-center shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slideInLeft"
+                style={{ backgroundColor: `${foodBank.primaryColor}20`, animationDelay: '100ms' }}
               >
                 <p className="text-sm uppercase font-medium mb-1">Total Giving</p>
                 <p 
                   className="text-3xl font-bold" 
                   style={{ color: foodBank.primaryColor }}
                 >
-                  ${Number(donor.totalGiving).toFixed(2)}
+                  {animateCount ? (
+                    <CountUp end={Number(donor.totalGiving)} duration={1.5} prefix="$" decimals={2} />
+                  ) : (
+                    `$${Number(donor.totalGiving).toFixed(2)}`
+                  )}
                 </p>
               </div>
               
               <div 
-                className="rounded-lg p-4 text-center" 
-                style={{ backgroundColor: `${foodBank.secondaryColor}20` }}
+                className="rounded-lg p-4 text-center shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slideInRight"
+                style={{ backgroundColor: `${foodBank.secondaryColor}20`, animationDelay: '200ms' }}
               >
                 <p className="text-sm uppercase font-medium mb-1">Meals Provided</p>
                 <p 
                   className="text-3xl font-bold" 
                   style={{ color: foodBank.secondaryColor }}
                 >
-                  {impact.meals.toLocaleString()}
+                  {animateCount ? (
+                    <CountUp end={impact.meals} duration={1.5} />
+                  ) : (
+                    impact.meals.toLocaleString()
+                  )}
                 </p>
               </div>
               
               <div 
-                className="rounded-lg p-4 text-center md:col-span-2" 
-                style={{ backgroundColor: `${foodBank.primaryColor}10` }}
+                className="rounded-lg p-4 text-center md:col-span-2 shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slideInBottom"
+                style={{ backgroundColor: `${foodBank.primaryColor}10`, animationDelay: '300ms' }}
               >
                 <p className="text-sm uppercase font-medium mb-1">People Helped</p>
-                <p className="text-2xl font-bold">{impact.people.toLocaleString()}</p>
+                <p className="text-2xl font-bold">
+                  {animateCount ? (
+                    <CountUp end={impact.people} duration={1.5} />
+                  ) : (
+                    impact.people.toLocaleString()
+                  )}
+                </p>
               </div>
             </div>
             
-            <div className="rounded-lg p-4 mb-8 bg-green-50 border border-green-100">
+            <div className="rounded-lg p-4 mb-8 bg-green-50 border border-green-100 shadow-md transition-all duration-300 hover:shadow-lg animate-fadeIn" style={{ animationDelay: '400ms' }}>
               <h3 className="text-lg font-medium mb-2 text-green-800">Environmental Impact</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="transition-transform duration-300 transform hover:scale-105">
                   <p className="text-sm text-muted-foreground mb-1">CO₂ Emissions Saved</p>
-                  <p className="text-lg font-medium">{impact.co2Saved.toLocaleString()} lbs</p>
+                  <p className="text-lg font-medium">
+                    {animateCount ? (
+                      <CountUp end={impact.co2Saved} duration={1.5} suffix=" lbs" />
+                    ) : (
+                      `${impact.co2Saved.toLocaleString()} lbs`
+                    )}
+                  </p>
                 </div>
-                <div>
+                <div className="transition-transform duration-300 transform hover:scale-105">
                   <p className="text-sm text-muted-foreground mb-1">Water Saved</p>
-                  <p className="text-lg font-medium">{impact.waterSaved.toLocaleString()} gal</p>
+                  <p className="text-lg font-medium">
+                    {animateCount ? (
+                      <CountUp end={impact.waterSaved} duration={1.5} suffix=" gal" />
+                    ) : (
+                      `${impact.waterSaved.toLocaleString()} gal`
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
             
-            <div className="text-center mb-6">
+            <div className="text-center mb-6 animate-fadeIn" style={{ animationDelay: '500ms' }}>
               <p className="mb-4 text-muted-foreground">Share your impact with others</p>
               <div className="flex justify-center gap-2">
-                <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
-                  window.open(`https://twitter.com/intent/tweet?text=I've provided ${impact.meals.toLocaleString()} meals through my donations to ${foodBank.name}! Check out my impact: ${window.location.href}`, '_blank');
-                }}>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full transition-transform duration-200 hover:scale-110 hover:bg-[#1DA1F2]/10" 
+                  onClick={() => {
+                    window.open(`https://twitter.com/intent/tweet?text=I've provided ${impact.meals.toLocaleString()} meals through my donations to ${foodBank.name}! Check out my impact: ${window.location.href}`, '_blank');
+                  }}
+                >
                   <Twitter className="h-5 w-5 text-[#1DA1F2]" />
                 </Button>
-                <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
-                  window.open(`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`, '_blank');
-                }}>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full transition-transform duration-200 hover:scale-110 hover:bg-[#1877F2]/10" 
+                  onClick={() => {
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`, '_blank');
+                  }}
+                >
                   <Facebook className="h-5 w-5 text-[#1877F2]" />
                 </Button>
-                <Button variant="outline" size="icon" className="rounded-full" onClick={() => {
-                  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}`, '_blank');
-                }}>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full transition-transform duration-200 hover:scale-110 hover:bg-[#0077B5]/10" 
+                  onClick={() => {
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}`, '_blank');
+                  }}
+                >
                   <Linkedin className="h-5 w-5 text-[#0077B5]" />
                 </Button>
-                <Button variant="outline" size="icon" className="rounded-full" onClick={copyUrlToClipboard}>
-                  {copiedToClipboard ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full transition-transform duration-200 hover:scale-110" 
+                  onClick={copyUrlToClipboard}
+                >
+                  {copiedToClipboard ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
                 </Button>
               </div>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between animate-fadeIn" style={{ animationDelay: '600ms' }}>
               <Button 
                 variant="outline"
                 onClick={goToPreviousSlide}
-                className="inline-flex items-center"
+                className="inline-flex items-center hover:scale-105 transition-transform duration-200"
               >
                 <ChevronLeft className="mr-2 h-5 w-5" /> Back
               </Button>
               <Button 
                 variant="outline"
-                className="inline-flex items-center"
+                className="inline-flex items-center hover:scale-105 transition-transform duration-200"
                 onClick={() => setCurrentSlide(0)}
               >
                 Start Over
