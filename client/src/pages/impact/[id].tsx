@@ -390,26 +390,26 @@ const DonorImpactExperience = () => {
         {SLIDES[currentSlide] === 'thanks' && (
           <div className="p-8 text-center">
             <div 
-              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse transition-transform duration-700 transform hover:scale-110" 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-scale transition-transform duration-700 transform hover:scale-110" 
               style={{ backgroundColor: `${foodBank.primaryColor}20` }}
             >
               <Heart 
-                className="h-8 w-8 animate-heartbeat" 
+                className="h-8 w-8 animate-heart-beat" 
                 style={{ color: foodBank.primaryColor }} 
               />
             </div>
             
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 animate-fadeIn">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 animate-fade-in">
               Thank You, {donor.firstName}!
             </h2>
             
-            <div className="max-w-lg mx-auto mb-8 animate-fadeIn" style={{ animationDelay: '200ms' }}>
+            <div className="max-w-lg mx-auto mb-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
               <p className="text-lg leading-relaxed mb-6">
                 {foodBank.thankYouMessage}
               </p>
               
               {foodBank.thankYouVideoUrl && (
-                <div className="aspect-video bg-muted w-full rounded-lg flex items-center justify-center mb-6 animate-fadeIn shadow-lg transition-transform duration-300 transform hover:scale-102" style={{ animationDelay: '400ms' }}>
+                <div className="aspect-video bg-muted w-full rounded-lg flex items-center justify-center mb-6 animate-fade-in shadow-lg transition-transform duration-300 transform hover:scale-102" style={{ animationDelay: '400ms' }}>
                   <iframe 
                     className="w-full h-full rounded-lg"
                     src={foodBank.thankYouVideoUrl}
@@ -422,7 +422,7 @@ const DonorImpactExperience = () => {
               )}
             </div>
             
-            <div className="flex justify-between animate-fadeIn" style={{ animationDelay: '500ms' }}>
+            <div className="flex justify-between animate-fade-in" style={{ animationDelay: '500ms' }}>
               <Button 
                 variant="outline"
                 onClick={goToPreviousSlide}
@@ -444,13 +444,13 @@ const DonorImpactExperience = () => {
         {/* Summary Slide */}
         {SLIDES[currentSlide] === 'summary' && (
           <div className="p-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center animate-fadeIn">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center animate-fade-in">
               Your 2023 Impact Summary
             </h2>
             
             <div className="grid md:grid-cols-2 gap-4 mb-8">
               <div 
-                className="rounded-lg p-4 text-center shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slideInLeft"
+                className="rounded-lg p-4 text-center shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slide-in-left"
                 style={{ backgroundColor: `${foodBank.primaryColor}20`, animationDelay: '100ms' }}
               >
                 <p className="text-sm uppercase font-medium mb-1">Total Giving</p>
@@ -467,7 +467,7 @@ const DonorImpactExperience = () => {
               </div>
               
               <div 
-                className="rounded-lg p-4 text-center shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slideInRight"
+                className="rounded-lg p-4 text-center shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slide-in-right"
                 style={{ backgroundColor: `${foodBank.secondaryColor}20`, animationDelay: '200ms' }}
               >
                 <p className="text-sm uppercase font-medium mb-1">Meals Provided</p>
@@ -484,7 +484,7 @@ const DonorImpactExperience = () => {
               </div>
               
               <div 
-                className="rounded-lg p-4 text-center md:col-span-2 shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slideInBottom"
+                className="rounded-lg p-4 text-center md:col-span-2 shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 animate-slide-in-bottom"
                 style={{ backgroundColor: `${foodBank.primaryColor}10`, animationDelay: '300ms' }}
               >
                 <p className="text-sm uppercase font-medium mb-1">People Helped</p>
