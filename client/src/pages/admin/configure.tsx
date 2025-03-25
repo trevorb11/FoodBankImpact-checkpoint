@@ -236,19 +236,39 @@ export default function AdminConfigure() {
                   >
                     Back
                   </Button>
-                  <Button 
-                    type="submit"
-                    disabled={updateMutation.isPending}
-                  >
-                    {updateMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      "Generate Donor Links"
-                    )}
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      disabled={updateMutation.isPending}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        updateMutation.mutate(formData);
+                      }}
+                    >
+                      {updateMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Settings"
+                      )}
+                    </Button>
+                    <Button 
+                      type="submit"
+                      disabled={updateMutation.isPending}
+                    >
+                      {updateMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save & Continue"
+                      )}
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             </form>

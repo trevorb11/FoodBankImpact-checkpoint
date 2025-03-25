@@ -135,14 +135,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API Routes - Protected endpoints
   app.get('/api/my-food-bank', isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const foodBank = await storage.getFoodBank(req.session.foodBankId);
+      let foodBank = await storage.getFoodBank(req.session.foodBankId);
       
       if (!foodBank) {
-        return res.status(404).json({ message: 'Food bank not found' });
+        // Create a default food bank for the user if one doesn't exist
+        const user = await storage.getUser(req.session.userId);
+        if (user) {
+          foodBank = await storage.createFoodBank({
+            name: `${user.username}'s Food Bank`,
+            logo: null,
+            primaryColor: "#0ea5e9",
+            secondaryColor: "#22c55e",
+            thankYouMessage: "Thank you for your generous support! Your contributions make a meaningful difference in our community.",
+            thankYouVideoUrl: null
+          });
+          
+          // Update user with new food bank ID
+          await storage.updateUser(user.id, { foodBankId: foodBank.id });
+          
+          // Update session
+          req.session.foodBankId = foodBank.id;
+        } else {
+          return res.status(404).json({ message: 'User not found' });
+        }
       }
       
       return res.json(foodBank);
     } catch (error) {
+      console.error('Error in /api/my-food-bank:', error);
       return res.status(500).json({ message: 'Server error' });
     }
   });
