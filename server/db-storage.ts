@@ -2,11 +2,22 @@ import { eq, and } from "drizzle-orm";
 import { db } from "./db";
 import { 
   users, foodBanks, donors, userSettings,
-  User, FoodBank, Donor, UserSettings,
-  InsertUser, InsertFoodBank, InsertDonor, InsertUserSettings
-} from "../shared/schema";
+  type User, type FoodBank, type Donor, type UserSettings,
+  type InsertUser, type InsertFoodBank, type InsertDonor, type InsertUserSettings
+} from "@shared/schema";
 import { IStorage } from "./storage";
-import { generateImpactUrlHash } from "../client/src/lib/utils";
+// Define a simple hash function for impact URLs
+function generateImpactUrlHash(email: string): string {
+  // Create a simple hash from email
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    const char = email.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  // Convert to base 36 (alphanumeric) and ensure positive
+  return Math.abs(hash).toString(36);
+}
 
 export class DbStorage implements IStorage {
   // User methods

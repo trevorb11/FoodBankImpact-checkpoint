@@ -1,20 +1,33 @@
+// This script pushes the schema to the database without using migrations
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
-import * as schema from "../shared/schema";
+import * as schema from "../shared/schema.js";
+import dotenv from "dotenv";
 
-// Create a PostgreSQL connection
-const connectionString = process.env.DATABASE_URL || "";
-const client = postgres(connectionString, { max: 1 });
-export const db = drizzle(client, { schema });
+// Load environment variables
+dotenv.config();
 
-// Initialize database with migrations (can be used during startup)
-export async function initializeDatabase() {
+async function main() {
+  console.log("Starting database schema push...");
+  
+  // Get connection string from environment variable
+  const connectionString = process.env.DATABASE_URL;
+  
+  if (!connectionString) {
+    console.error("DATABASE_URL environment variable not set");
+    process.exit(1);
+  }
+  
+  // Connect to database
+  const sql = postgres(connectionString, { max: 1 });
+  const db = drizzle(sql, { schema });
+  
   try {
-    console.log("Initializing database...");
-
-    // Create tables directly based on schema
-    await client`
+    console.log("Pushing schema to database...");
+    
+    // Create users table
+    await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT NOT NULL UNIQUE,
@@ -25,8 +38,10 @@ export async function initializeDatabase() {
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
+    console.log("Created users table");
     
-    await client`
+    // Create foodBanks table
+    await sql`
       CREATE TABLE IF NOT EXISTS "foodBanks" (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -39,8 +54,10 @@ export async function initializeDatabase() {
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
+    console.log("Created foodBanks table");
     
-    await client`
+    // Create donors table
+    await sql`
       CREATE TABLE IF NOT EXISTS donors (
         id SERIAL PRIMARY KEY,
         "firstName" TEXT NOT NULL,
@@ -57,8 +74,10 @@ export async function initializeDatabase() {
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
+    console.log("Created donors table");
     
-    await client`
+    // Create userSettings table
+    await sql`
       CREATE TABLE IF NOT EXISTS "userSettings" (
         id SERIAL PRIMARY KEY,
         "userId" INTEGER NOT NULL UNIQUE,
@@ -72,23 +91,17 @@ export async function initializeDatabase() {
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `;
-
-    console.log("Database initialized successfully");
-    return true;
+    console.log("Created userSettings table");
+    
+    console.log("Schema push completed successfully");
   } catch (error) {
-    console.error("Error initializing database:", error);
-    return false;
+    console.error("Schema push failed:", error);
+    process.exit(1);
   }
+  
+  // Close connection
+  await sql.end();
+  console.log("Database connection closed");
 }
 
-// Helper to check if the database is connected
-export async function checkDatabaseConnection() {
-  try {
-    // Try a simple query to verify connection
-    const result = await client`SELECT 1 as connected`;
-    return result[0]?.connected === 1;
-  } catch (error) {
-    console.error("Database connection error:", error);
-    return false;
-  }
-}
+main();
