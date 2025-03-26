@@ -6,18 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 
 export default function AdminConfigure() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Define the food bank type to include privacy settings
+  type FoodBankData = {
+    id: number;
+    name: string;
+    logo: string | null;
+    primaryColor: string;
+    secondaryColor: string;
+    thankYouMessage: string;
+    thankYouVideoUrl: string | null;
+    defaultAnonymousDonors: boolean;
+    defaultShowFullName: boolean;
+    defaultShowEmail: boolean;
+    defaultAllowSharing: boolean;
+    privacyPolicyText: string;
+  };
+  
   // Fetch the food bank data
-  const { data: foodBank, isLoading } = useQuery({
+  const { data: foodBank, isLoading } = useQuery<FoodBankData>({
     queryKey: ['/api/food-bank/1'],
   });
   
@@ -27,7 +44,13 @@ export default function AdminConfigure() {
     primaryColor: '#0ea5e9',
     secondaryColor: '#22c55e',
     thankYouMessage: '',
-    thankYouVideoUrl: ''
+    thankYouVideoUrl: '',
+    // Privacy settings
+    defaultAnonymousDonors: false,
+    defaultShowFullName: true,
+    defaultShowEmail: false,
+    defaultAllowSharing: true,
+    privacyPolicyText: 'We respect your privacy and will only use your information in accordance with your preferences.'
   });
   
   // Update form data when food bank data is loaded
@@ -39,7 +62,13 @@ export default function AdminConfigure() {
         primaryColor: foodBank.primaryColor || '#0ea5e9',
         secondaryColor: foodBank.secondaryColor || '#22c55e',
         thankYouMessage: foodBank.thankYouMessage || '',
-        thankYouVideoUrl: foodBank.thankYouVideoUrl || ''
+        thankYouVideoUrl: foodBank.thankYouVideoUrl || '',
+        // Privacy settings with defaults
+        defaultAnonymousDonors: foodBank.defaultAnonymousDonors ?? false,
+        defaultShowFullName: foodBank.defaultShowFullName ?? true,
+        defaultShowEmail: foodBank.defaultShowEmail ?? false,
+        defaultAllowSharing: foodBank.defaultAllowSharing ?? true,
+        privacyPolicyText: foodBank.privacyPolicyText || 'We respect your privacy and will only use your information in accordance with your preferences.'
       });
     }
   }, [foodBank]);
@@ -47,7 +76,13 @@ export default function AdminConfigure() {
   // Update food bank mutation
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      return apiRequest('POST', '/api/food-bank/1', data);
+      return apiRequest<typeof formData>('/api/food-bank/1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/food-bank/1'] });
@@ -88,6 +123,14 @@ export default function AdminConfigure() {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+  
+  // Handle toggle changes
+  const handleToggleChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked
     }));
   };
   
@@ -227,6 +270,82 @@ export default function AdminConfigure() {
                       />
                     </div>
                   </div>
+                  
+                  {/* Privacy Settings */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-md font-medium">Donor Privacy Settings</h3>
+                      <div className="flex items-center text-muted-foreground text-xs">
+                        <Info className="h-3.5 w-3.5 mr-1" />
+                        <span>Default settings for new donors</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="defaultAnonymousDonors">Anonymous Donors</Label>
+                          <p className="text-xs text-muted-foreground">Show donors as "Anonymous Donor" by default</p>
+                        </div>
+                        <Switch
+                          id="defaultAnonymousDonors"
+                          checked={formData.defaultAnonymousDonors}
+                          onCheckedChange={(checked) => handleToggleChange('defaultAnonymousDonors', checked)}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="defaultShowFullName">Show Full Name</Label>
+                          <p className="text-xs text-muted-foreground">Display donor's full name by default</p>
+                        </div>
+                        <Switch
+                          id="defaultShowFullName"
+                          checked={formData.defaultShowFullName}
+                          onCheckedChange={(checked) => handleToggleChange('defaultShowFullName', checked)}
+                          disabled={formData.defaultAnonymousDonors}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="defaultShowEmail">Show Email</Label>
+                          <p className="text-xs text-muted-foreground">Display donor's email address by default</p>
+                        </div>
+                        <Switch
+                          id="defaultShowEmail"
+                          checked={formData.defaultShowEmail}
+                          onCheckedChange={(checked) => handleToggleChange('defaultShowEmail', checked)}
+                          disabled={formData.defaultAnonymousDonors}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="defaultAllowSharing">Allow Social Sharing</Label>
+                          <p className="text-xs text-muted-foreground">Allow donors to share their impact on social media</p>
+                        </div>
+                        <Switch
+                          id="defaultAllowSharing"
+                          checked={formData.defaultAllowSharing}
+                          onCheckedChange={(checked) => handleToggleChange('defaultAllowSharing', checked)}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4">
+                      <Label htmlFor="privacyPolicyText">Privacy Policy Message</Label>
+                      <Textarea
+                        id="privacyPolicyText"
+                        name="privacyPolicyText"
+                        value={formData.privacyPolicyText}
+                        onChange={handleChange}
+                        placeholder="We respect your privacy and will only use your information in accordance with your preferences."
+                        rows={2}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <Button 
@@ -306,7 +425,9 @@ export default function AdminConfigure() {
                       </div>
                     )}
                     
-                    <h1 className="text-xl font-bold mb-2">Hey Sarah!</h1>
+                    <h1 className="text-xl font-bold mb-2">
+                      Hey {formData.defaultAnonymousDonors ? "Anonymous Donor" : "Sarah"}!
+                    </h1>
                     <div className="mb-4">
                       <p className="text-sm mb-1">Here's your</p>
                       <div className="text-xl font-bold">
