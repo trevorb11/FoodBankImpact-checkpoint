@@ -19,7 +19,13 @@ export const OPTIONAL_CSV_COLUMNS = [
   'first_gift_date',
   'last_gift_date',
   'largest_gift',
-  'gift_count'
+  'gift_count',
+  // Privacy fields
+  'is_anonymous',
+  'show_full_name',
+  'show_email',
+  'allow_sharing',
+  'opt_out_date'
 ];
 
 // Steps in the admin process

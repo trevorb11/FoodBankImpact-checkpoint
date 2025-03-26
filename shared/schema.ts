@@ -29,6 +29,12 @@ export const foodBanks = pgTable("foodBanks", {
   secondaryColor: text("secondaryColor").default("#22c55e"),
   thankYouMessage: text("thankYouMessage").default("Thank you for your generous support! Your contributions make a meaningful difference in our community."),
   thankYouVideoUrl: text("thankYouVideoUrl"),
+  // Privacy defaults
+  defaultAnonymousDonors: boolean("defaultAnonymousDonors").default(false).notNull(),
+  defaultShowFullName: boolean("defaultShowFullName").default(true).notNull(),
+  defaultShowEmail: boolean("defaultShowEmail").default(false).notNull(),
+  defaultAllowSharing: boolean("defaultAllowSharing").default(true).notNull(),
+  privacyPolicyText: text("privacyPolicyText").default("We respect your privacy and will only use your information in accordance with your preferences."),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -49,6 +55,12 @@ export const donors = pgTable("donors", {
   giftCount: integer("giftCount"),
   foodBankId: integer("foodBankId").notNull(),
   impactUrl: text("impactUrl"),
+  // Privacy controls
+  isAnonymous: boolean("isAnonymous").default(false).notNull(),
+  showFullName: boolean("showFullName").default(true).notNull(),
+  showEmail: boolean("showEmail").default(false).notNull(),
+  allowSharing: boolean("allowSharing").default(true).notNull(),
+  optOutDate: timestamp("optOutDate"), // When the donor opted out of sharing
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -82,7 +94,13 @@ export const csvDonorSchema = z.object({
   first_gift_date: z.string().optional(),
   last_gift_date: z.string().optional(),
   largest_gift: z.string().optional().transform((val) => val ? parseFloat(val) : undefined),
-  gift_count: z.string().optional().transform((val) => val ? parseInt(val) : undefined)
+  gift_count: z.string().optional().transform((val) => val ? parseInt(val) : undefined),
+  // Privacy settings
+  is_anonymous: z.string().optional().transform((val) => val === "true" || val === "1" || val === "yes"),
+  show_full_name: z.string().optional().transform((val) => !(val === "false" || val === "0" || val === "no")),
+  show_email: z.string().optional().transform((val) => val === "true" || val === "1" || val === "yes"),
+  allow_sharing: z.string().optional().transform((val) => !(val === "false" || val === "0" || val === "no")),
+  opt_out_date: z.string().optional()
 });
 
 // Type definitions
