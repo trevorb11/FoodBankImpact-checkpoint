@@ -56,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Start session
       req.session.userId = user.id;
-      req.session.foodBankId = user.foodBankId;
+      req.session.foodBankId = user.foodBankId ?? 0; // Handle null foodBankId
       
       return res.status(201).json({ 
         id: user.id, 
@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Start session
       req.session.userId = user.id;
-      req.session.foodBankId = user.foodBankId;
+      req.session.foodBankId = user.foodBankId ?? 0; // Handle null foodBankId
       
       return res.status(200).json({ 
         id: user.id, 
@@ -113,7 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/auth/me', isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const user = await storage.getUser(req.session.userId);
+      // TypeScript requires non-null assertion because it can't infer from isAuthenticated
+      const user = await storage.getUser(req.session.userId!);
       
       if (!user) {
         // This should never happen unless the session is invalid
@@ -135,11 +136,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API Routes - Protected endpoints
   app.get('/api/my-food-bank', isAuthenticated, async (req: Request, res: Response) => {
     try {
-      let foodBank = await storage.getFoodBank(req.session.foodBankId);
+      let foodBank = await storage.getFoodBank(req.session.foodBankId!);
       
       if (!foodBank) {
         // Create a default food bank for the user if one doesn't exist
-        const user = await storage.getUser(req.session.userId);
+        const user = await storage.getUser(req.session.userId!);
         if (user) {
           foodBank = await storage.createFoodBank({
             name: `${user.username}'s Food Bank`,
@@ -170,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/my-food-bank', isAuthenticated, async (req: Request, res: Response) => {
     try {
       const validatedData = insertFoodBankSchema.parse(req.body);
-      const updatedFoodBank = await storage.updateFoodBank(req.session.foodBankId, validatedData);
+      const updatedFoodBank = await storage.updateFoodBank(req.session.foodBankId!, validatedData);
       
       if (!updatedFoodBank) {
         return res.status(404).json({ message: 'Food bank not found' });
@@ -187,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get('/api/my-donors', isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const donors = await storage.getDonorsByFoodBankId(req.session.foodBankId);
+      const donors = await storage.getDonorsByFoodBankId(req.session.foodBankId!);
       return res.json(donors);
     } catch (error) {
       return res.status(500).json({ message: 'Server error' });
@@ -197,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Settings Routes
   app.get('/api/my-settings', isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const settings = await storage.getUserSettings(req.session.userId);
+      const settings = await storage.getUserSettings(req.session.userId!);
       
       if (!settings) {
         return res.status(404).json({ message: 'User settings not found' });
@@ -217,17 +218,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       delete validatedData.userId;
       
       // Check if user has settings
-      let settings = await storage.getUserSettings(req.session.userId);
+      let settings = await storage.getUserSettings(req.session.userId!);
       
       if (!settings) {
         // Create new settings
         settings = await storage.createUserSettings({
           ...validatedData,
-          userId: req.session.userId
+          userId: req.session.userId!
         });
       } else {
         // Update existing settings
-        settings = await storage.updateUserSettings(req.session.userId, validatedData);
+        settings = await storage.updateUserSettings(req.session.userId!, validatedData);
       }
       
       return res.json(settings);
