@@ -318,17 +318,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const impactUrl = `${emailHash}`;
           
+          // Get food bank privacy defaults to use when CSV doesn't specify
+          const foodBank = await storage.getFoodBank(foodBankId);
+          
           processedDonors.push({
             firstName: validatedDonor.first_name,
             lastName: validatedDonor.last_name,
             email: validatedDonor.email,
-            totalGiving: validatedDonor.total_giving,
-            firstGiftDate: validatedDonor.first_gift_date ? new Date(validatedDonor.first_gift_date) : null,
-            lastGiftDate: validatedDonor.last_gift_date ? new Date(validatedDonor.last_gift_date) : null,
-            largestGift: validatedDonor.largest_gift || null,
-            giftCount: validatedDonor.gift_count || null,
+            totalGiving: validatedDonor.total_giving.toString(), // Convert to string to match schema
+            firstGiftDate: validatedDonor.first_gift_date ? new Date(validatedDonor.first_gift_date) : undefined,
+            lastGiftDate: validatedDonor.last_gift_date ? new Date(validatedDonor.last_gift_date) : undefined,
+            largestGift: validatedDonor.largest_gift ? validatedDonor.largest_gift.toString() : undefined,
+            giftCount: validatedDonor.gift_count,
             foodBankId,
-            impactUrl
+            impactUrl,
+            // Privacy settings with fallbacks to food bank defaults
+            isAnonymous: validatedDonor.is_anonymous !== undefined ? 
+              validatedDonor.is_anonymous : 
+              (foodBank?.defaultAnonymousDonors || false),
+            showFullName: validatedDonor.show_full_name !== undefined ? 
+              validatedDonor.show_full_name : 
+              (foodBank?.defaultShowFullName || true),
+            showEmail: validatedDonor.show_email !== undefined ? 
+              validatedDonor.show_email : 
+              (foodBank?.defaultShowEmail || false),
+            allowSharing: validatedDonor.allow_sharing !== undefined ? 
+              validatedDonor.allow_sharing : 
+              (foodBank?.defaultAllowSharing || true),
+            optOutDate: validatedDonor.opt_out_date ? new Date(validatedDonor.opt_out_date) : undefined
           });
         } catch (error) {
           if (error instanceof z.ZodError) {
@@ -393,7 +410,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ message: "Food bank not found" });
     }
     
-    return res.json({ donor, foodBank });
+    // Check if the donor has opted out completely
+    if (donor.optOutDate) {
+      return res.status(403).json({ 
+        message: "This donor has opted out of sharing their impact data",
+        optedOut: true 
+      });
+    }
+    
+    // Create a privacy-respecting version of the donor data
+    const sanitizedDonor = {
+      ...donor,
+      // Only include name if allowed
+      firstName: donor.isAnonymous ? "Anonymous" : donor.firstName,
+      lastName: donor.isAnonymous ? "Donor" : (donor.showFullName ? donor.lastName : ""),
+      // Only include email if allowed
+      email: donor.showEmail ? donor.email : undefined,
+      // Always include donation data
+      totalGiving: donor.totalGiving,
+      firstGiftDate: donor.firstGiftDate,
+      lastGiftDate: donor.lastGiftDate,
+      largestGift: donor.largestGift,
+      giftCount: donor.giftCount,
+      // Include privacy flags for frontend
+      allowSharing: donor.allowSharing,
+      isAnonymous: donor.isAnonymous
+    };
+    
+    return res.json({ donor: sanitizedDonor, foodBank });
   });
 
   const httpServer = createServer(app);

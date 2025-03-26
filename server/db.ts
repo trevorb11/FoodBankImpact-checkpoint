@@ -35,6 +35,11 @@ export async function initializeDatabase() {
         "secondaryColor" TEXT DEFAULT '#22c55e',
         "thankYouMessage" TEXT DEFAULT 'Thank you for your generous support! Your contributions make a meaningful difference in our community.',
         "thankYouVideoUrl" TEXT,
+        "defaultAnonymousDonors" BOOLEAN DEFAULT false NOT NULL,
+        "defaultShowFullName" BOOLEAN DEFAULT true NOT NULL,
+        "defaultShowEmail" BOOLEAN DEFAULT false NOT NULL,
+        "defaultAllowSharing" BOOLEAN DEFAULT true NOT NULL,
+        "privacyPolicyText" TEXT DEFAULT 'We respect your privacy and will only use your information in accordance with your preferences.',
         "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       )
@@ -53,6 +58,11 @@ export async function initializeDatabase() {
         "giftCount" INTEGER,
         "foodBankId" INTEGER NOT NULL,
         "impactUrl" TEXT,
+        "isAnonymous" BOOLEAN DEFAULT false NOT NULL,
+        "showFullName" BOOLEAN DEFAULT true NOT NULL,
+        "showEmail" BOOLEAN DEFAULT false NOT NULL,
+        "allowSharing" BOOLEAN DEFAULT true NOT NULL,
+        "optOutDate" TIMESTAMP,
         "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       )
@@ -71,6 +81,59 @@ export async function initializeDatabase() {
         "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       )
+    `;
+
+    // Migrate existing tables by adding new columns if they don't exist
+    // For foodBanks table
+    await client`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public."foodBanks"'::regclass AND attname = 'defaultAnonymousDonors') THEN
+          ALTER TABLE "foodBanks" ADD COLUMN "defaultAnonymousDonors" BOOLEAN DEFAULT false NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public."foodBanks"'::regclass AND attname = 'defaultShowFullName') THEN
+          ALTER TABLE "foodBanks" ADD COLUMN "defaultShowFullName" BOOLEAN DEFAULT true NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public."foodBanks"'::regclass AND attname = 'defaultShowEmail') THEN
+          ALTER TABLE "foodBanks" ADD COLUMN "defaultShowEmail" BOOLEAN DEFAULT false NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public."foodBanks"'::regclass AND attname = 'defaultAllowSharing') THEN
+          ALTER TABLE "foodBanks" ADD COLUMN "defaultAllowSharing" BOOLEAN DEFAULT true NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public."foodBanks"'::regclass AND attname = 'privacyPolicyText') THEN
+          ALTER TABLE "foodBanks" ADD COLUMN "privacyPolicyText" TEXT DEFAULT 'We respect your privacy and will only use your information in accordance with your preferences.';
+        END IF;
+      END $$;
+    `;
+    
+    // For donors table
+    await client`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public.donors'::regclass AND attname = 'isAnonymous') THEN
+          ALTER TABLE donors ADD COLUMN "isAnonymous" BOOLEAN DEFAULT false NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public.donors'::regclass AND attname = 'showFullName') THEN
+          ALTER TABLE donors ADD COLUMN "showFullName" BOOLEAN DEFAULT true NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public.donors'::regclass AND attname = 'showEmail') THEN
+          ALTER TABLE donors ADD COLUMN "showEmail" BOOLEAN DEFAULT false NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public.donors'::regclass AND attname = 'allowSharing') THEN
+          ALTER TABLE donors ADD COLUMN "allowSharing" BOOLEAN DEFAULT true NOT NULL;
+        END IF;
+        
+        IF NOT EXISTS (SELECT FROM pg_attribute WHERE attrelid = 'public.donors'::regclass AND attname = 'optOutDate') THEN
+          ALTER TABLE donors ADD COLUMN "optOutDate" TIMESTAMP;
+        END IF;
+      END $$;
     `;
 
     console.log("Database initialized successfully");

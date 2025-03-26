@@ -200,10 +200,16 @@ export class MemStorage implements IStorage {
       id,
       name: insertFoodBank.name,
       logo: insertFoodBank.logo ?? null,
-      primaryColor: insertFoodBank.primaryColor ?? null,
-      secondaryColor: insertFoodBank.secondaryColor ?? null,
-      thankYouMessage: insertFoodBank.thankYouMessage ?? null,
+      primaryColor: insertFoodBank.primaryColor ?? "#0ea5e9",
+      secondaryColor: insertFoodBank.secondaryColor ?? "#22c55e",
+      thankYouMessage: insertFoodBank.thankYouMessage ?? "Thank you for your generous support! Your contributions make a meaningful difference in our community.",
       thankYouVideoUrl: insertFoodBank.thankYouVideoUrl ?? null,
+      // Privacy defaults
+      defaultAnonymousDonors: insertFoodBank.defaultAnonymousDonors ?? false,
+      defaultShowFullName: insertFoodBank.defaultShowFullName ?? true,
+      defaultShowEmail: insertFoodBank.defaultShowEmail ?? false,
+      defaultAllowSharing: insertFoodBank.defaultAllowSharing ?? true,
+      privacyPolicyText: insertFoodBank.privacyPolicyText ?? "We respect your privacy and will only use your information in accordance with your preferences.",
       createdAt: now,
       updatedAt: now
     };
@@ -264,6 +270,12 @@ export class MemStorage implements IStorage {
       largestGift: insertDonor.largestGift ?? null,
       giftCount: insertDonor.giftCount ?? null,
       impactUrl: insertDonor.impactUrl ?? null,
+      // Privacy settings
+      isAnonymous: insertDonor.isAnonymous ?? false,
+      showFullName: insertDonor.showFullName ?? true,
+      showEmail: insertDonor.showEmail ?? false,
+      allowSharing: insertDonor.allowSharing ?? true,
+      optOutDate: insertDonor.optOutDate ?? null,
       createdAt: now,
       updatedAt: now
     };
