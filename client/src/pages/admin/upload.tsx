@@ -24,16 +24,21 @@ export default function AdminUpload() {
   
   const uploadMutation = useMutation({
     mutationFn: async (donors: any[]) => {
-      return apiRequest('POST', '/api/donors/upload', {
-        foodBankId: 1, // Using the default food bank
-        donors
+      return apiRequest('/api/donors/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          foodBankId: 1, // Using the default food bank
+          donors
+        })
       });
     },
-    onSuccess: async (response) => {
-      const data = await response.json();
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/donors/food-bank/1'] });
       
-      if (data.hasErrors) {
+      if (data?.hasErrors) {
         toast({
           title: "Upload partially successful",
           description: `Processed ${data.totalProcessed} donor records. Some records had validation errors.`,
@@ -42,7 +47,7 @@ export default function AdminUpload() {
       } else {
         toast({
           title: "Upload successful",
-          description: `Successfully processed ${data.totalProcessed} donor records.`,
+          description: `Successfully processed ${data?.totalProcessed} donor records.`,
           variant: "default",
         });
       }
