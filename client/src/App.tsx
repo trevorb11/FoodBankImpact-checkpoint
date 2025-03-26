@@ -6,7 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/index";
 import AdminDashboard from "@/pages/admin/index";
-import AdminUpload from "@/pages/admin/upload";
+import AdminUpload from "@/pages/admin/upload-new"; // Using the new improved upload page
 import AdminConfigure from "@/pages/admin/configure";
 import AdminDistribute from "@/pages/admin/distribute";
 import AdminPreview from "@/pages/admin/preview";

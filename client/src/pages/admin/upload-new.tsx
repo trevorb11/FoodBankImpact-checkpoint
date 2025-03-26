@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from "@/hooks/use-toast";
 import Papa from 'papaparse';
+import { ParseResult, ParseError } from 'papaparse';
 import { AlertCircle, FileText, Check, X, Upload, FileCheck, Download, Loader2, FileUp, Info, CircleCheck, CircleAlert, ArrowRight, User, DollarSign, Calendar, Hash } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -79,12 +80,12 @@ export default function AdminUpload() {
       Papa.parse(selectedFile, {
         header: true,
         skipEmptyLines: true,
-        complete: (results) => {
+        complete: (results: ParseResult<any>) => {
           setIsUploading(false);
           
           if (results.errors && results.errors.length > 0) {
-            const parseErrors = results.errors.map((error, index) => ({
-              row: error.row + 1,
+            const parseErrors = results.errors.map((error: ParseError, index: number) => ({
+              row: (error.row || 0) + 1,
               field: 'parse_error',
               message: error.message
             }));
@@ -145,7 +146,7 @@ export default function AdminUpload() {
           setValidationErrors(validationErrors);
           setParsedData(results.data);
         },
-        error: (error) => {
+        error: (error: Error) => {
           setIsUploading(false);
           toast({
             title: "Parsing error",
