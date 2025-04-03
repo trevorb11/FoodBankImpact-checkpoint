@@ -35,6 +35,13 @@ export const foodBanks = pgTable("foodBanks", {
   defaultShowEmail: boolean("defaultShowEmail").default(false).notNull(),
   defaultAllowSharing: boolean("defaultAllowSharing").default(true).notNull(),
   privacyPolicyText: text("privacyPolicyText").default("We respect your privacy and will only use your information in accordance with your preferences."),
+  // Impact equivalencies - default values based on Feeding America metrics
+  dollarsPerMeal: numeric("dollarsPerMeal").default("0.20").notNull(),
+  mealsPerPerson: numeric("mealsPerPerson").default("3").notNull(),
+  poundsPerMeal: numeric("poundsPerMeal").default("1.2").notNull(),
+  co2PerPound: numeric("co2PerPound").default("2.5").notNull(),
+  waterPerPound: numeric("waterPerPound").default("108").notNull(),
+  // Track record creation and updates
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

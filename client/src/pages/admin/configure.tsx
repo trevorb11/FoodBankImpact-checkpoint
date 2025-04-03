@@ -17,7 +17,7 @@ export default function AdminConfigure() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Define the food bank type to include privacy settings
+  // Define the food bank type to include privacy settings and impact equivalencies
   type FoodBankData = {
     id: number;
     name: string;
@@ -31,6 +31,12 @@ export default function AdminConfigure() {
     defaultShowEmail: boolean;
     defaultAllowSharing: boolean;
     privacyPolicyText: string;
+    // Impact equivalencies
+    dollarsPerMeal: number;
+    mealsPerPerson: number;
+    poundsPerMeal: number;
+    co2PerPound: number;
+    waterPerPound: number;
   };
   
   // Fetch the food bank data
@@ -50,9 +56,22 @@ export default function AdminConfigure() {
     defaultShowFullName: true,
     defaultShowEmail: false,
     defaultAllowSharing: true,
-    privacyPolicyText: 'We respect your privacy and will only use your information in accordance with your preferences.'
+    privacyPolicyText: 'We respect your privacy and will only use your information in accordance with your preferences.',
+    // Impact equivalencies
+    dollarsPerMeal: 0.20,
+    mealsPerPerson: 3,
+    poundsPerMeal: 1.2,
+    co2PerPound: 2.5,
+    waterPerPound: 108
   });
   
+  // Create a function to handle numeric conversions
+  const parseNumericField = (value: any, defaultValue: number): number => {
+    if (value === undefined || value === null) return defaultValue;
+    const parsed = typeof value === 'string' ? parseFloat(value) : Number(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+  };
+
   // Update form data when food bank data is loaded
   useEffect(() => {
     if (foodBank) {
@@ -68,7 +87,13 @@ export default function AdminConfigure() {
         defaultShowFullName: foodBank.defaultShowFullName ?? true,
         defaultShowEmail: foodBank.defaultShowEmail ?? false,
         defaultAllowSharing: foodBank.defaultAllowSharing ?? true,
-        privacyPolicyText: foodBank.privacyPolicyText || 'We respect your privacy and will only use your information in accordance with your preferences.'
+        privacyPolicyText: foodBank.privacyPolicyText || 'We respect your privacy and will only use your information in accordance with your preferences.',
+        // Impact equivalencies with defaults
+        dollarsPerMeal: parseNumericField(foodBank.dollarsPerMeal, 0.20),
+        mealsPerPerson: parseNumericField(foodBank.mealsPerPerson, 3),
+        poundsPerMeal: parseNumericField(foodBank.poundsPerMeal, 1.2),
+        co2PerPound: parseNumericField(foodBank.co2PerPound, 2.5),
+        waterPerPound: parseNumericField(foodBank.waterPerPound, 108)
       });
     }
   }, [foodBank]);
@@ -268,6 +293,110 @@ export default function AdminConfigure() {
                         placeholder="https://www.youtube.com/watch?v=..."
                         className="mt-1"
                       />
+                    </div>
+                  </div>
+                  
+                  {/* Impact Equivalencies */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-md font-medium">Impact Equivalencies</h3>
+                      <div className="flex items-center text-muted-foreground text-xs">
+                        <Info className="h-3.5 w-3.5 mr-1" />
+                        <span>Customize how donations convert to impact metrics</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+                      <div>
+                        <Label htmlFor="dollarsPerMeal">Dollars per Meal</Label>
+                        <div className="flex items-center mt-1">
+                          <span className="text-muted-foreground mr-2">$</span>
+                          <Input
+                            id="dollarsPerMeal"
+                            name="dollarsPerMeal"
+                            type="number" 
+                            step="0.01"
+                            min="0.01"
+                            value={formData.dollarsPerMeal}
+                            onChange={(e) => setFormData({...formData, dollarsPerMeal: parseFloat(e.target.value)})}
+                            className="flex-1"
+                          />
+                          <span className="text-muted-foreground ml-2">= 1 meal</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">How many dollars does it take to provide one meal?</p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="mealsPerPerson">Meals per Person</Label>
+                        <div className="flex items-center mt-1">
+                          <Input
+                            id="mealsPerPerson"
+                            name="mealsPerPerson"
+                            type="number" 
+                            step="0.5"
+                            min="1"
+                            value={formData.mealsPerPerson}
+                            onChange={(e) => setFormData({...formData, mealsPerPerson: parseFloat(e.target.value)})}
+                            className="flex-1"
+                          />
+                          <span className="text-muted-foreground ml-2">meals = 1 person fed</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">How many meals does it take to feed one person (for a day)?</p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="poundsPerMeal">Pounds per Meal</Label>
+                        <div className="flex items-center mt-1">
+                          <Input
+                            id="poundsPerMeal"
+                            name="poundsPerMeal"
+                            type="number" 
+                            step="0.1"
+                            min="0.1"
+                            value={formData.poundsPerMeal}
+                            onChange={(e) => setFormData({...formData, poundsPerMeal: parseFloat(e.target.value)})}
+                            className="flex-1"
+                          />
+                          <span className="text-muted-foreground ml-2">lbs per meal</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">How many pounds of food make up one meal?</p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="co2PerPound">CO2 Saved per Pound</Label>
+                        <div className="flex items-center mt-1">
+                          <Input
+                            id="co2PerPound"
+                            name="co2PerPound"
+                            type="number" 
+                            step="0.1"
+                            min="0.1"
+                            value={formData.co2PerPound}
+                            onChange={(e) => setFormData({...formData, co2PerPound: parseFloat(e.target.value)})}
+                            className="flex-1"
+                          />
+                          <span className="text-muted-foreground ml-2">lbs of CO2 per lb of food</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Pounds of CO2 emissions avoided per pound of food rescued</p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="waterPerPound">Water Saved per Pound</Label>
+                        <div className="flex items-center mt-1">
+                          <Input
+                            id="waterPerPound"
+                            name="waterPerPound"
+                            type="number" 
+                            step="1"
+                            min="1"
+                            value={formData.waterPerPound}
+                            onChange={(e) => setFormData({...formData, waterPerPound: parseFloat(e.target.value)})}
+                            className="flex-1"
+                          />
+                          <span className="text-muted-foreground ml-2">gallons per lb of food</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">Gallons of water saved per pound of food rescued</p>
+                      </div>
                     </div>
                   </div>
                   

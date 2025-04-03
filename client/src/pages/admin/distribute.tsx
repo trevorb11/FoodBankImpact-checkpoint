@@ -72,7 +72,7 @@ export default function AdminDistribute() {
     
     const headers = ['Name', 'Email', 'Amount', 'Meals Provided', 'People Helped', 'Impact URL'];
     const data = donors.map(donor => {
-      const impact = calculateImpactMetrics(Number(donor.totalGiving));
+      const impact = calculateImpactMetrics(Number(donor.totalGiving), foodBank);
       return [
         `${donor.firstName} ${donor.lastName}`,
         donor.email,
@@ -99,7 +99,7 @@ export default function AdminDistribute() {
   // Calculate impact stats
   const totalDonors = donors?.length || 0;
   const totalRaised = donors?.reduce((sum, donor) => sum + Number(donor.totalGiving), 0) || 0;
-  const totalImpact = calculateImpactMetrics(totalRaised);
+  const totalImpact = calculateImpactMetrics(totalRaised, foodBank);
   
   // Pagination
   const pageCount = donors ? Math.ceil(donors.length / rowsPerPage) : 0;
@@ -173,7 +173,7 @@ export default function AdminDistribute() {
                         </TableRow>
                       ) : (
                         currentDonors.map((donor) => {
-                          const impact = calculateImpactMetrics(Number(donor.totalGiving));
+                          const impact = calculateImpactMetrics(Number(donor.totalGiving), foodBank);
                           const impactUrl = getImpactUrl(donor);
                           
                           return (

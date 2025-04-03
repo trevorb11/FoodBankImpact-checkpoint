@@ -33,8 +33,8 @@ const DonorImpactExperience = () => {
   const donor = data?.donor;
   const foodBank = data?.foodBank;
   
-  // Calculate impact metrics
-  const impact = donor ? calculateImpactMetrics(Number(donor.totalGiving)) : {
+  // Calculate impact metrics using food bank's custom equivalencies if available
+  const impact = donor ? calculateImpactMetrics(Number(donor.totalGiving), foodBank) : {
     meals: 0,
     people: 0,
     pounds: 0,
@@ -205,7 +205,7 @@ const DonorImpactExperience = () => {
             </div>
             
             <p className="text-lg text-muted-foreground mb-8">
-              Every dollar you donated provided approximately {IMPACT_FORMULAS.DOLLARS_TO_MEALS} meals to people facing hunger in our community.
+              Every dollar you donated provided approximately {foodBank?.dollarsPerMeal ? Math.round(1/Number(foodBank.dollarsPerMeal)) : IMPACT_FORMULAS.DOLLARS_TO_MEALS} meals to people facing hunger in our community.
             </p>
             
             <div className="flex justify-between">

@@ -7,16 +7,48 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Calculates impact metrics based on donation amount
+ * Calculates impact metrics based on donation amount using food bank specific metrics if available
  * @param amount Donation amount in dollars
+ * @param foodBank Optional food bank with custom impact factors
  * @returns Object with calculated impact metrics
  */
-export function calculateImpactMetrics(amount: number) {
-  const meals = amount * IMPACT_FORMULAS.DOLLARS_TO_MEALS;
-  const people = Math.ceil(meals / IMPACT_FORMULAS.MEALS_TO_PEOPLE);
-  const pounds = meals * (1 / IMPACT_FORMULAS.POUNDS_TO_MEALS);
-  const co2Saved = pounds * IMPACT_FORMULAS.CO2_PER_POUND;
-  const waterSaved = pounds * IMPACT_FORMULAS.WATER_PER_POUND;
+export function calculateImpactMetrics(
+  amount: number, 
+  foodBank?: { 
+    dollarsPerMeal?: number; 
+    mealsPerPerson?: number; 
+    poundsPerMeal?: number; 
+    co2PerPound?: number; 
+    waterPerPound?: number; 
+  }
+) {
+  // Use food bank specific values if provided, otherwise fall back to defaults
+  const dollarsPerMeal = foodBank?.dollarsPerMeal !== undefined ? 
+    Number(foodBank.dollarsPerMeal) : 
+    (1 / IMPACT_FORMULAS.DOLLARS_TO_MEALS);
+  
+  const mealsPerPerson = foodBank?.mealsPerPerson !== undefined ? 
+    Number(foodBank.mealsPerPerson) : 
+    IMPACT_FORMULAS.MEALS_TO_PEOPLE;
+  
+  const poundsPerMeal = foodBank?.poundsPerMeal !== undefined ? 
+    Number(foodBank.poundsPerMeal) : 
+    IMPACT_FORMULAS.POUNDS_TO_MEALS;
+  
+  const co2PerPound = foodBank?.co2PerPound !== undefined ? 
+    Number(foodBank.co2PerPound) : 
+    IMPACT_FORMULAS.CO2_PER_POUND;
+  
+  const waterPerPound = foodBank?.waterPerPound !== undefined ? 
+    Number(foodBank.waterPerPound) : 
+    IMPACT_FORMULAS.WATER_PER_POUND;
+  
+  // Calculate impact metrics
+  const meals = amount / dollarsPerMeal;
+  const people = Math.ceil(meals / mealsPerPerson);
+  const pounds = meals * poundsPerMeal;
+  const co2Saved = pounds * co2PerPound;
+  const waterSaved = pounds * waterPerPound;
   
   return {
     meals: Math.round(meals),

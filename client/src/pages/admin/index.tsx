@@ -18,8 +18,8 @@ export default function AdminDashboard() {
     queryKey: ['/api/donors/food-bank/1'],
   });
   
-  // Calculate total impact metrics
-  const impactMetrics = calculateImpactMetrics(donors?.reduce((sum, donor) => sum + Number(donor.totalGiving), 0) || 0);
+  // Calculate total impact metrics using food bank's custom equivalencies
+  const impactMetrics = calculateImpactMetrics(donors?.reduce((sum, donor) => sum + Number(donor.totalGiving), 0) || 0, foodBank);
   
   // Mock data for chart
   const chartData = [
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
                 {isLoadingDonors ? "Loading..." : impactMetrics.meals.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
-                Based on Feeding America metrics
+                Based on your custom impact metrics
               </p>
             </CardContent>
           </Card>

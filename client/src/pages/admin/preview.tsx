@@ -36,8 +36,8 @@ export default function AdminPreview() {
   // Get a sample donor (first one) for preview
   const sampleDonor = donors && donors.length > 0 ? donors[0] : null;
   
-  // Calculate impact metrics for the sample donor
-  const impact = sampleDonor ? calculateImpactMetrics(Number(sampleDonor.totalGiving)) : { meals: 0, people: 0 };
+  // Calculate impact metrics for the sample donor using food bank-specific equivalencies
+  const impact = sampleDonor ? calculateImpactMetrics(Number(sampleDonor.totalGiving), foodBank) : { meals: 0, people: 0 };
   
   // Format date to readable format
   const formatDate = (dateString: string | null) => {
@@ -142,7 +142,7 @@ export default function AdminPreview() {
             </div>
             
             <p className="text-lg text-muted-foreground mb-8">
-              Every dollar you donated provided approximately 10 meals to people facing hunger in our community.
+              Every dollar you donated provided approximately {foodBank?.dollarsPerMeal ? Math.round(1/Number(foodBank.dollarsPerMeal)) : 10} meals to people facing hunger in our community.
             </p>
             
             <div className="flex justify-between">
