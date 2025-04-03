@@ -310,10 +310,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const validatedDonor = csvDonorSchema.parse(donorsData[i]);
           
+          // Type assertion to help TypeScript understand the type
+          const typedDonor = validatedDonor as {
+            first_name: string;
+            last_name: string;
+            email: string;
+            total_giving: number;
+            first_gift_date?: string;
+            last_gift_date?: string;
+            largest_gift?: number;
+            gift_count?: number;
+            is_anonymous?: boolean;
+            show_full_name?: boolean;
+            show_email?: boolean;
+            allow_sharing?: boolean;
+            opt_out_date?: string;
+          };
+          
           // Create impact URL
           const emailHash = crypto
             .createHash('sha256')
-            .update(validatedDonor.email)
+            .update(typedDonor.email)
             .digest('hex')
             .substring(0, 12);
           
@@ -323,30 +340,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const foodBank = await storage.getFoodBank(foodBankId);
           
           processedDonors.push({
-            firstName: validatedDonor.first_name,
-            lastName: validatedDonor.last_name,
-            email: validatedDonor.email,
-            totalGiving: validatedDonor.total_giving.toString(), // Convert to string to match schema
-            firstGiftDate: validatedDonor.first_gift_date ? new Date(validatedDonor.first_gift_date) : undefined,
-            lastGiftDate: validatedDonor.last_gift_date ? new Date(validatedDonor.last_gift_date) : undefined,
-            largestGift: validatedDonor.largest_gift ? validatedDonor.largest_gift.toString() : undefined,
-            giftCount: validatedDonor.gift_count,
+            firstName: typedDonor.first_name,
+            lastName: typedDonor.last_name,
+            email: typedDonor.email,
+            totalGiving: typedDonor.total_giving.toString(), // Convert to string to match schema
+            firstGiftDate: typedDonor.first_gift_date ? new Date(typedDonor.first_gift_date) : undefined,
+            lastGiftDate: typedDonor.last_gift_date ? new Date(typedDonor.last_gift_date) : undefined,
+            largestGift: typedDonor.largest_gift !== undefined ? typedDonor.largest_gift.toString() : undefined,
+            giftCount: typedDonor.gift_count,
             foodBankId,
             impactUrl,
             // Privacy settings with fallbacks to food bank defaults
-            isAnonymous: validatedDonor.is_anonymous !== undefined ? 
-              validatedDonor.is_anonymous : 
+            isAnonymous: typedDonor.is_anonymous !== undefined ? 
+              typedDonor.is_anonymous : 
               (foodBank?.defaultAnonymousDonors || false),
-            showFullName: validatedDonor.show_full_name !== undefined ? 
-              validatedDonor.show_full_name : 
+            showFullName: typedDonor.show_full_name !== undefined ? 
+              typedDonor.show_full_name : 
               (foodBank?.defaultShowFullName || true),
-            showEmail: validatedDonor.show_email !== undefined ? 
-              validatedDonor.show_email : 
+            showEmail: typedDonor.show_email !== undefined ? 
+              typedDonor.show_email : 
               (foodBank?.defaultShowEmail || false),
-            allowSharing: validatedDonor.allow_sharing !== undefined ? 
-              validatedDonor.allow_sharing : 
+            allowSharing: typedDonor.allow_sharing !== undefined ? 
+              typedDonor.allow_sharing : 
               (foodBank?.defaultAllowSharing || true),
-            optOutDate: validatedDonor.opt_out_date ? new Date(validatedDonor.opt_out_date) : undefined
+            optOutDate: typedDonor.opt_out_date ? new Date(typedDonor.opt_out_date) : undefined
           });
         } catch (error) {
           if (error instanceof z.ZodError) {
@@ -379,7 +396,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errors: errors.length > 0 ? errors : undefined
       });
     } catch (error) {
-      return res.status(500).json({ message: "Failed to process donor data" });
+      console.error('Error processing donor upload:', error);
+      return res.status(500).json({ 
+        message: "Failed to process donor data", 
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
   

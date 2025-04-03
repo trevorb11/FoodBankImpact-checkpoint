@@ -90,17 +90,67 @@ export const csvDonorSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
-  total_giving: z.string().transform((val) => parseFloat(val)),
-  first_gift_date: z.string().optional(),
-  last_gift_date: z.string().optional(),
-  largest_gift: z.string().optional().transform((val) => val ? parseFloat(val) : undefined),
-  gift_count: z.string().optional().transform((val) => val ? parseInt(val) : undefined),
+  total_giving: z.preprocess(
+    (val) => typeof val === 'string' ? parseFloat(val.replace(/[$,]/g, '')) : val, 
+    z.number().nonnegative("Total giving must be a positive number")
+  ),
+  first_gift_date: z.preprocess(
+    (val) => val === '' ? undefined : val,
+    z.string().optional()
+  ),
+  last_gift_date: z.preprocess(
+    (val) => val === '' ? undefined : val,
+    z.string().optional()
+  ),
+  largest_gift: z.preprocess(
+    (val) => {
+      if (val === '' || val === undefined || val === null) return undefined;
+      if (typeof val === 'string') return parseFloat(val.replace(/[$,]/g, ''));
+      return val;
+    },
+    z.number().refine(n => n >= 0, "Largest gift must be a positive number").optional()
+  ),
+  gift_count: z.preprocess(
+    (val) => {
+      if (val === '' || val === undefined || val === null) return undefined;
+      if (typeof val === 'string') return parseInt(val);
+      return val;
+    },
+    z.number().int().refine(n => n >= 0, "Gift count must be a positive integer").optional()
+  ),
   // Privacy settings
-  is_anonymous: z.string().optional().transform((val) => val === "true" || val === "1" || val === "yes"),
-  show_full_name: z.string().optional().transform((val) => !(val === "false" || val === "0" || val === "no")),
-  show_email: z.string().optional().transform((val) => val === "true" || val === "1" || val === "yes"),
-  allow_sharing: z.string().optional().transform((val) => !(val === "false" || val === "0" || val === "no")),
-  opt_out_date: z.string().optional()
+  is_anonymous: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === '') return undefined;
+      return val === "true" || val === "1" || val === "yes" || val === true;
+    },
+    z.boolean().optional()
+  ),
+  show_full_name: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === '') return undefined;
+      return !(val === "false" || val === "0" || val === "no" || val === false);
+    },
+    z.boolean().optional()
+  ),
+  show_email: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === '') return undefined;
+      return val === "true" || val === "1" || val === "yes" || val === true;
+    },
+    z.boolean().optional()
+  ),
+  allow_sharing: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === '') return undefined;
+      return !(val === "false" || val === "0" || val === "no" || val === false);
+    },
+    z.boolean().optional()
+  ),
+  opt_out_date: z.preprocess(
+    (val) => val === '' ? undefined : val,
+    z.string().optional()
+  )
 });
 
 // Type definitions

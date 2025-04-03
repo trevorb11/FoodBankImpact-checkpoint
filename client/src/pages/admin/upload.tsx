@@ -59,10 +59,15 @@ export default function AdminUpload() {
       // Navigate to configure step
       setLocation('/admin/configure');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Upload error:', error);
+      
+      // Handle the error with more detail
+      const errorDetails = error.details || error.message || "Failed to process donor data";
+      
       toast({
         title: "Upload failed",
-        description: error.message || "Failed to process donor data",
+        description: errorDetails,
         variant: "destructive",
       });
     }
@@ -84,9 +89,9 @@ export default function AdminUpload() {
           
           if (results.errors && results.errors.length > 0) {
             const parseErrors = results.errors.map((error, index) => ({
-              row: error.row + 1,
+              row: (error.row !== undefined ? error.row : index) + 1,
               field: 'parse_error',
-              message: error.message
+              message: error.message || 'Unknown parsing error'
             }));
             
             setValidationErrors(parseErrors);
