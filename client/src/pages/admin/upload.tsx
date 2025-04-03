@@ -42,7 +42,20 @@ export default function AdminUpload() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/donors/food-bank/1'] });
       
-      if (data?.hasErrors) {
+      // Show more detailed success messages with update information
+      if (data?.newDonors > 0 && data?.updatedDonors > 0) {
+        toast({
+          title: "Upload successful",
+          description: `Processed ${data.totalProcessed} donors (${data.newDonors} new, ${data.updatedDonors} updated)`,
+          variant: "default",
+        });
+      } else if (data?.updatedDonors > 0) {
+        toast({
+          title: "Donors updated",
+          description: `Updated ${data.updatedDonors} existing donors.`,
+          variant: "default",
+        });
+      } else if (data?.hasErrors) {
         toast({
           title: "Upload partially successful",
           description: `Processed ${data.totalProcessed} donor records. Some records had validation errors.`,
@@ -73,7 +86,7 @@ export default function AdminUpload() {
           const firstDuplicates = error.duplicates.slice(0, 3);
           const remainingCount = error.duplicates.length - firstDuplicates.length;
           
-          const duplicatesList = firstDuplicates.map(d => `${d.name} (${d.email})`).join(', ');
+          const duplicatesList = firstDuplicates.map((d: {name: string, email: string}) => `${d.name} (${d.email})`).join(', ');
           const additionalText = remainingCount > 0 ? ` and ${remainingCount} more` : '';
           
           toast({
