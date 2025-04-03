@@ -305,6 +305,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const processedDonors = [];
       const errors = [];
+      const skippedEmails = [];
+      
+      // First, get all emails that already exist in the database for this food bank
+      const existingDonors = await storage.getDonorsByFoodBankId(foodBankId);
+      const existingEmails = new Set(existingDonors.map(donor => donor.email.toLowerCase()));
       
       for (let i = 0; i < donorsData.length; i++) {
         try {
@@ -326,6 +331,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             allow_sharing?: boolean;
             opt_out_date?: string;
           };
+          
+          // Check if email already exists in the database
+          if (existingEmails.has(typedDonor.email.toLowerCase())) {
+            skippedEmails.push({
+              row: i + 1,
+              email: typedDonor.email,
+              name: `${typedDonor.first_name} ${typedDonor.last_name}`
+            });
+            continue; // Skip this donor and move to the next one
+          }
           
           // Create impact URL
           const emailHash = crypto
@@ -365,6 +380,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               (foodBank?.defaultAllowSharing || true),
             optOutDate: typedDonor.opt_out_date ? new Date(typedDonor.opt_out_date) : undefined
           });
+          
+          // Add this email to our set to prevent duplicates within the same file
+          existingEmails.add(typedDonor.email.toLowerCase());
+          
         } catch (error) {
           if (error instanceof z.ZodError) {
             errors.push({
@@ -380,20 +399,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      if (errors.length > 0 && processedDonors.length === 0) {
-        return res.status(400).json({ 
-          message: "All donor records contain validation errors", 
-          errors 
-        });
+      // Handle case where no records could be processed
+      if ((errors.length > 0 || skippedEmails.length > 0) && processedDonors.length === 0) {
+        if (skippedEmails.length > 0 && errors.length === 0) {
+          return res.status(400).json({ 
+            message: "All donor records contain duplicate emails", 
+            duplicates: skippedEmails
+          });
+        } else {
+          return res.status(400).json({ 
+            message: "All donor records contain validation errors or duplicate emails", 
+            errors,
+            duplicates: skippedEmails.length > 0 ? skippedEmails : undefined
+          });
+        }
       }
       
-      const createdDonors = await storage.createDonors(processedDonors);
+      // Only attempt to create donors if we have at least one valid donor
+      let createdDonors = [];
+      if (processedDonors.length > 0) {
+        createdDonors = await storage.createDonors(processedDonors);
+      }
       
       return res.status(201).json({ 
         message: `Successfully processed ${createdDonors.length} donor records`,
         totalProcessed: createdDonors.length,
-        hasErrors: errors.length > 0,
-        errors: errors.length > 0 ? errors : undefined
+        skippedDuplicates: skippedEmails.length,
+        hasErrors: errors.length > 0 || skippedEmails.length > 0,
+        errors: errors.length > 0 ? errors : undefined,
+        duplicates: skippedEmails.length > 0 ? skippedEmails : undefined
       });
     } catch (error) {
       console.error('Error processing donor upload:', error);

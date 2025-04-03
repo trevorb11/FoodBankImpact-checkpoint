@@ -62,7 +62,37 @@ export default function AdminUpload() {
     onError: (error: any) => {
       console.error('Upload error:', error);
       
-      // Handle the error with more detail
+      // Check for duplicate email errors
+      if (error.details?.includes('duplicate key value') || 
+          error.details?.includes('violates unique constraint') ||
+          error.duplicates) {
+            
+        // Check if we have detailed duplicate information
+        if (error.duplicates && Array.isArray(error.duplicates)) {
+          // Show more detailed error with first few duplicates
+          const firstDuplicates = error.duplicates.slice(0, 3);
+          const remainingCount = error.duplicates.length - firstDuplicates.length;
+          
+          const duplicatesList = firstDuplicates.map(d => `${d.name} (${d.email})`).join(', ');
+          const additionalText = remainingCount > 0 ? ` and ${remainingCount} more` : '';
+          
+          toast({
+            title: `${error.duplicates.length} duplicate donors detected`,
+            description: `Donors already in database: ${duplicatesList}${additionalText}. Upload records with new emails or check the "Update existing donors" option.`,
+            variant: "destructive",
+          });
+        } else {
+          // Generic duplicate error
+          toast({
+            title: "Duplicate emails detected",
+            description: "Your upload contains email addresses that already exist in the database. Please remove duplicates and try again.",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+      
+      // Handle other errors with more detail
       const errorDetails = error.details || error.message || "Failed to process donor data";
       
       toast({

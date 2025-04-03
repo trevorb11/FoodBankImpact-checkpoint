@@ -2,8 +2,22 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    try {
+      // Try to parse response as JSON for more detailed error info
+      const errorData = await res.json();
+      throw {
+        status: res.status,
+        statusText: res.statusText,
+        message: errorData.message || "An unexpected error occurred",
+        details: errorData.details || null,
+        duplicates: errorData.duplicates || null,
+        errors: errorData.errors || null
+      };
+    } catch (e) {
+      // If response is not JSON, use text
+      const text = await res.text() || res.statusText;
+      throw new Error(`${res.status}: ${text}`);
+    }
   }
 }
 
@@ -20,15 +34,20 @@ export async function apiRequest<T = any>(
     return null;
   }
 
-  await throwIfResNotOk(res);
-  
-  // For HEAD requests or empty responses
-  if (res.status === 204 || res.headers.get("Content-Length") === "0") {
-    return null;
+  try {
+    await throwIfResNotOk(res);
+    
+    // For HEAD requests or empty responses
+    if (res.status === 204 || res.headers.get("Content-Length") === "0") {
+      return null;
+    }
+    
+    // Parse the JSON response
+    return await res.json();
+  } catch (error) {
+    console.error("API Request Error:", error);
+    throw error;
   }
-  
-  // Parse the JSON response
-  return await res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -45,8 +64,19 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
-    await throwIfResNotOk(res);
-    return await res.json();
+    try {
+      await throwIfResNotOk(res);
+      
+      // For HEAD requests or empty responses
+      if (res.status === 204 || res.headers.get("Content-Length") === "0") {
+        return null;
+      }
+      
+      return await res.json();
+    } catch (error) {
+      console.error("Query Error:", error);
+      throw error;
+    }
   };
 
 export const queryClient = new QueryClient({
