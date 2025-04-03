@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/index";
 import AdminDashboard from "@/pages/admin/index";
@@ -13,6 +14,7 @@ import AdminPreview from "@/pages/admin/preview";
 import DonorImpact from "@/pages/impact/[id]";
 import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
+import TestErrorPage from "@/pages/test-error";
 
 function Router() {
   return (
@@ -34,6 +36,9 @@ function Router() {
       {/* Donor impact experience */}
       <Route path="/impact/:id" component={DonorImpact} />
       
+      {/* Error test page */}
+      <Route path="/test-error" component={TestErrorPage} />
+      
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
@@ -42,12 +47,14 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router />
+          <Toaster />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
