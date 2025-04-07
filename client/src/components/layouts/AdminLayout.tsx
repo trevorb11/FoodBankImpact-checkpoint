@@ -96,7 +96,7 @@ const AdminLayout = ({ children, activeTab = 'dashboard' }: AdminLayoutProps) =>
         )}
       >
         {/* Logo */}
-        <div className="border-b px-6 py-10 flex items-center justify-between">
+        <div className="border-b px-6 pt-4 pb-6 flex items-center justify-between">
           <div className="flex flex-col items-center">
             <div className="h-40 w-72 mb-1">
               <img 
