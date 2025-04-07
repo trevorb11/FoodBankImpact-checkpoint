@@ -57,7 +57,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex flex-col items-center justify-center mb-2">
-            <div className="h-24 w-48 mb-1">
+            <div className="h-28 w-60 mb-1">
               <img 
                 src="/images/impact-wrapped-logo.png" 
                 alt="Impact Wrapped Logo" 
