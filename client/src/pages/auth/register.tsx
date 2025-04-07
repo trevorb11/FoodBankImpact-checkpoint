@@ -64,13 +64,12 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-2">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <img 
+              src="/images/impact-wrapped-logo.png" 
+              alt="Impact Wrapped Logo" 
+              className="h-16 object-contain"
+            />
           </div>
-          <CardTitle className="text-2xl text-center">Impact Wrapped</CardTitle>
           <CardDescription className="text-center">Create your food bank account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

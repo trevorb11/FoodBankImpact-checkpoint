@@ -97,14 +97,15 @@ const AdminLayout = ({ children, activeTab = 'dashboard' }: AdminLayoutProps) =>
       >
         {/* Logo */}
         <div className="border-b px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 rounded-lg p-2">
-              <Heart className="h-6 w-6 text-primary" />
+          <div className="flex flex-col items-center">
+            <div className="h-16 w-48 mb-1">
+              <img 
+                src="/images/impact-wrapped-logo.png" 
+                alt="Impact Wrapped Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div>
-              <span className="font-bold text-lg">Impact Wrapped</span>
-              <p className="text-xs text-muted-foreground -mt-1">Visualize your food bank's impact</p>
-            </div>
+            <p className="text-sm text-muted-foreground font-medium">Visualize Your Food Bank's Impact</p>
           </div>
           {isMobile && (
             <Button variant="ghost" size="icon" onClick={toggleSidebar}>
