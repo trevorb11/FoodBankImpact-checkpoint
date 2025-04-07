@@ -18,14 +18,56 @@ export default function AdminDistribute() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
   
+  // Define food bank type
+  type FoodBank = {
+    id: number;
+    name: string;
+    logo: string | null;
+    primaryColor: string;
+    secondaryColor: string;
+    thankYouMessage: string;
+    thankYouVideoUrl: string | null;
+    defaultAnonymousDonors: boolean;
+    defaultShowFullName: boolean;
+    defaultShowEmail: boolean;
+    defaultAllowSharing: boolean;
+    privacyPolicyText: string;
+    // Impact equivalencies
+    dollarsPerMeal: number;
+    mealsPerPerson: number;
+    poundsPerMeal: number;
+    co2PerPound: number;
+    waterPerPound: number;
+  };
+
   // Fetch the food bank data
-  const { data: foodBank, isLoading: isLoadingFoodBank } = useQuery({
-    queryKey: ['/api/food-bank/1'],
+  const { data: foodBank, isLoading: isLoadingFoodBank } = useQuery<FoodBank>({
+    queryKey: ['/api/my-food-bank'],
   });
   
+  // Define donor type
+  type Donor = {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    totalGiving: string;
+    firstGiftDate?: Date;
+    lastGiftDate?: Date;
+    largestGift?: string;
+    giftCount?: number;
+    impactUrl: string;
+    foodBankId: number;
+    isAnonymous: boolean;
+    showFullName: boolean;
+    showEmail: boolean;
+    allowSharing: boolean;
+    optOutDate?: Date;
+  };
+
   // Fetch donors for this food bank
-  const { data: donors, isLoading: isLoadingDonors } = useQuery({
-    queryKey: ['/api/donors/food-bank/1'],
+  const { data: donors, isLoading: isLoadingDonors } = useQuery<Donor[]>({
+    queryKey: ['/api/my-donors'],
   });
   
   useEffect(() => {
@@ -63,7 +105,7 @@ export default function AdminDistribute() {
     }, 2000);
   };
   
-  const getImpactUrl = (donor: any) => {
+  const getImpactUrl = (donor: Donor) => {
     return `${window.location.origin}/impact/${donor.impactUrl}`;
   };
   
@@ -72,7 +114,7 @@ export default function AdminDistribute() {
     
     const headers = ['Name', 'Email', 'Amount', 'Meals Provided', 'People Helped', 'Impact URL'];
     const data = donors.map(donor => {
-      const impact = calculateImpactMetrics(Number(donor.totalGiving), foodBank);
+      const impact = calculateImpactMetrics(Number(donor.totalGiving), foodBank as FoodBank);
       return [
         `${donor.firstName} ${donor.lastName}`,
         donor.email,
@@ -99,7 +141,7 @@ export default function AdminDistribute() {
   // Calculate impact stats
   const totalDonors = donors?.length || 0;
   const totalRaised = donors?.reduce((sum, donor) => sum + Number(donor.totalGiving), 0) || 0;
-  const totalImpact = calculateImpactMetrics(totalRaised, foodBank);
+  const totalImpact = calculateImpactMetrics(totalRaised, foodBank as FoodBank);
   
   // Pagination
   const pageCount = donors ? Math.ceil(donors.length / rowsPerPage) : 0;
@@ -173,7 +215,7 @@ export default function AdminDistribute() {
                         </TableRow>
                       ) : (
                         currentDonors.map((donor) => {
-                          const impact = calculateImpactMetrics(Number(donor.totalGiving), foodBank);
+                          const impact = calculateImpactMetrics(Number(donor.totalGiving), foodBank as FoodBank);
                           const impactUrl = getImpactUrl(donor);
                           
                           return (

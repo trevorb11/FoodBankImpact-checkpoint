@@ -283,12 +283,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Process CSV data and create donors
-  app.post("/api/donors/upload", async (req: Request, res: Response) => {
-    const foodBankId = parseInt(req.body.foodBankId);
-    
-    if (isNaN(foodBankId)) {
-      return res.status(400).json({ message: "Invalid food bank ID" });
-    }
+  app.post("/api/donors/upload", isAuthenticated, async (req: Request, res: Response) => {
+    const foodBankId = req.session.foodBankId!;
     
     const foodBank = await storage.getFoodBank(foodBankId);
     
@@ -451,15 +447,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get donors by food bank ID
-  app.get("/api/donors/food-bank/:id", async (req: Request, res: Response) => {
-    const foodBankId = parseInt(req.params.id);
-    
-    if (isNaN(foodBankId)) {
-      return res.status(400).json({ message: "Invalid food bank ID" });
+  // Get donors for current food bank (authenticated route)
+  app.get("/api/my-donors", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const donors = await storage.getDonorsByFoodBankId(req.session.foodBankId!);
+      return res.json(donors);
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error' });
     }
-    
-    const donors = await storage.getDonorsByFoodBankId(foodBankId);
+  });
+  
+  // Legacy route - maintaining for backward compatibility
+  app.get("/api/donors/food-bank/:id", isAuthenticated, async (req: Request, res: Response) => {
+    // Use session food bank ID instead of path parameter for security
+    const donors = await storage.getDonorsByFoodBankId(req.session.foodBankId!);
     return res.json(donors);
   });
   

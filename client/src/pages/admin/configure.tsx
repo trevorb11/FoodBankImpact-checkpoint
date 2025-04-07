@@ -41,7 +41,7 @@ export default function AdminConfigure() {
   
   // Fetch the food bank data
   const { data: foodBank, isLoading } = useQuery<FoodBankData>({
-    queryKey: ['/api/food-bank/1'],
+    queryKey: ['/api/my-food-bank'],
   });
   
   const [formData, setFormData] = useState({
@@ -101,7 +101,7 @@ export default function AdminConfigure() {
   // Update food bank mutation
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      return apiRequest<typeof formData>('/api/food-bank/1', {
+      return apiRequest<typeof formData>('/api/my-food-bank', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -110,7 +110,7 @@ export default function AdminConfigure() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/food-bank/1'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-food-bank'] });
       toast({
         title: "Settings updated",
         description: "Your food bank settings have been updated successfully.",

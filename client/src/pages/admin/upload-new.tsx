@@ -35,13 +35,12 @@ export default function AdminUpload() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          foodBankId: 1, // Using the default food bank
           donors
         })
       });
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/donors/food-bank/1'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/my-donors'] });
       
       if (data?.hasErrors) {
         toast({
