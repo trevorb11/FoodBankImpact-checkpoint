@@ -56,14 +56,17 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-2">
-            <img 
-              src="/images/impact-wrapped-logo.png" 
-              alt="Impact Wrapped Logo" 
-              className="h-16 object-contain"
-            />
+          <div className="flex flex-col items-center justify-center mb-2">
+            <div className="h-24 w-48 mb-1">
+              <img 
+                src="/images/impact-wrapped-logo.png" 
+                alt="Impact Wrapped Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground mt-1 mb-2 font-medium">Visualize Your Food Bank's Impact</p>
+            <CardDescription className="text-center">Login to your food bank account</CardDescription>
           </div>
-          <CardDescription className="text-center">Login to your food bank account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {loginError && (
