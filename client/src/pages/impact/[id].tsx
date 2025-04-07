@@ -141,10 +141,10 @@ const DonorImpactExperience = () => {
             
             <div className="mb-6">
               <p className="text-xl font-medium mb-2">Here's your</p>
-              <div className="flex items-center justify-center">
-                <h2 className="text-4xl font-bold">
-                  <span style={{ color: foodBank.primaryColor }}>2023</span> 
-                  <span className="mx-2">Impact</span>
+              <div className="flex items-center justify-center flex-wrap">
+                <h2 className="text-3xl sm:text-4xl font-bold text-center">
+                  <span style={{ color: foodBank.primaryColor }}>2023</span>{' '}
+                  <span className="mx-1 sm:mx-2">Impact</span>{' '}
                   <span style={{ color: foodBank.secondaryColor }}>Wrapped</span>
                 </h2>
               </div>
@@ -172,14 +172,14 @@ const DonorImpactExperience = () => {
             </h2>
             
             <div className="relative mb-6">
-              <div className="text-7xl md:text-8xl font-bold my-12" style={{ color: foodBank.primaryColor }}>
+              <div className="text-5xl sm:text-7xl md:text-8xl font-bold my-8 md:my-12" style={{ color: foodBank.primaryColor }}>
                 {animateCount ? (
                   <CountUp end={impact.meals} duration={1.5} />
                 ) : (
                   impact.meals.toLocaleString()
                 )}
               </div>
-              <div className="text-2xl md:text-3xl font-medium">
+              <div className="text-xl sm:text-2xl md:text-3xl font-medium">
                 meals provided
               </div>
               
@@ -235,15 +235,15 @@ const DonorImpactExperience = () => {
             </h2>
             
             <div className="relative mb-6">
-              <div className="flex justify-center items-end gap-2 my-12">
-                <div className="text-7xl md:text-8xl font-bold" style={{ color: foodBank.secondaryColor }}>
+              <div className="flex justify-center items-end gap-2 my-8 md:my-12">
+                <div className="text-5xl sm:text-7xl md:text-8xl font-bold" style={{ color: foodBank.secondaryColor }}>
                   {animateCount ? (
                     <CountUp end={impact.people} duration={1.5} />
                   ) : (
                     impact.people.toLocaleString()
                   )}
                 </div>
-                <div className="text-2xl md:text-3xl font-medium mb-3">
+                <div className="text-xl sm:text-2xl md:text-3xl font-medium mb-3">
                   people
                 </div>
               </div>
@@ -499,11 +499,11 @@ const DonorImpactExperience = () => {
             </div>
             
             <div className="rounded-lg p-4 mb-8 bg-green-50 border border-green-100 shadow-md transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '400ms' }}>
-              <h3 className="text-lg font-medium mb-2 text-green-800">Environmental Impact</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <h3 className="text-lg font-medium mb-3 text-green-800">Environmental Impact</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="transition-transform duration-300 transform hover:scale-105">
                   <p className="text-sm text-muted-foreground mb-1">CO₂ Emissions Saved</p>
-                  <p className="text-lg font-medium">
+                  <p className="text-base sm:text-lg font-medium">
                     {animateCount ? (
                       <CountUp end={impact.co2Saved} duration={1.5} suffix=" lbs" />
                     ) : (
@@ -513,7 +513,7 @@ const DonorImpactExperience = () => {
                 </div>
                 <div className="transition-transform duration-300 transform hover:scale-105">
                   <p className="text-sm text-muted-foreground mb-1">Water Saved</p>
-                  <p className="text-lg font-medium">
+                  <p className="text-base sm:text-lg font-medium">
                     {animateCount ? (
                       <CountUp end={impact.waterSaved} duration={1.5} suffix=" gal" />
                     ) : (
