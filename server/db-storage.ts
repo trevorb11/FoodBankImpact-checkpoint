@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { db } from "./db";
 import { 
   users, foodBanks, donors, userSettings,
@@ -155,12 +155,30 @@ export class DbStorage implements IStorage {
   }
 
   async createDonors(donorsToCreate: (InsertDonor & { impactUrl?: string })[]): Promise<Donor[]> {
+    if (donorsToCreate.length === 0) return [];
+    
     // Generate impact URLs for all donors that don't have one
     const donorsWithUrls = donorsToCreate.map(donor => ({
       ...donor,
       impactUrl: donor.impactUrl || generateImpactUrlHash(donor.email)
     }));
     
+    // First, let's check for existing emails to avoid the unique constraint error
+    // Check each donor one by one if they already exist in the database
+    for (const donor of donorsWithUrls) {
+      const existingDonor = await this.getDonorByEmail(donor.email);
+      if (existingDonor) {
+        // Construct a detailed error with the duplicate information
+        const error = new Error(`Duplicate email detected: ${donor.email}`);
+        (error as any).duplicateInfo = {
+          email: donor.email,
+          name: `${donor.firstName} ${donor.lastName}`
+        };
+        throw error;
+      }
+    }
+    
+    // If no duplicates, proceed with insertion
     const results = await db.insert(donors).values(donorsWithUrls).returning();
     return results;
   }

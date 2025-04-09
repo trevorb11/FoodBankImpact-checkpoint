@@ -417,16 +417,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process new and updated donors
       let createdDonors = [];
       let updatedDonorResults = [];
+      let failedDonors = [];
       
-      if (newDonors.length > 0) {
-        createdDonors = await storage.createDonors(newDonors);
-      }
-      
-      for (const donor of updatedDonors) {
-        const { id, ...updateData } = donor;
-        const updatedDonor = await storage.updateDonor(id, updateData);
-        if (updatedDonor) {
-          updatedDonorResults.push(updatedDonor);
+      try {
+        if (newDonors.length > 0) {
+          createdDonors = await storage.createDonors(newDonors);
+        }
+        
+        for (const donor of updatedDonors) {
+          const { id, ...updateData } = donor;
+          try {
+            const updatedDonor = await storage.updateDonor(id, updateData);
+            if (updatedDonor) {
+              updatedDonorResults.push(updatedDonor);
+            }
+          } catch (updateError) {
+            console.error('Error updating donor:', updateError);
+            failedDonors.push({
+              name: `${donor.firstName} ${donor.lastName}`,
+              email: donor.email,
+              error: updateError instanceof Error ? updateError.message : String(updateError)
+            });
+          }
+        }
+      } catch (error) {
+        // Check if it's a duplicate key error
+        if (error instanceof Error && 
+            (error.message.includes('duplicate key') || 
+             error.message.includes('unique constraint') ||
+             error.message.includes('Duplicate email detected'))) {
+          
+          // Check if we have rich error info from our enhanced checks
+          const errorAny = error as any;
+          if (errorAny.duplicateInfo) {
+            return res.status(400).json({
+              message: "Duplicate email detected",
+              details: `The email address ${errorAny.duplicateInfo.email} already exists in the database`,
+              duplicates: [{ 
+                name: errorAny.duplicateInfo.name || "Existing donor", 
+                email: errorAny.duplicateInfo.email
+              }]
+            });
+          }
+          
+          // Extract the email from the error message if possible (fallback)
+          let emailMatch = error.message.match(/Key \(email\)=\(([^)]+)\)/);
+          let email = emailMatch ? emailMatch[1] : null;
+          
+          return res.status(400).json({
+            message: "Duplicate email detected",
+            details: `The email address ${email || 'in your upload'} already exists in the database`,
+            duplicates: [{ 
+              name: email ? "Existing donor" : "Unknown donor", 
+              email: email || "unknown"
+            }]
+          });
+        } else {
+          throw error; // Re-throw other errors to be caught by the outer catch block
         }
       }
       
