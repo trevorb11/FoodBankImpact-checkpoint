@@ -14,6 +14,9 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminUpload() {
   const [, setLocation] = useLocation();
@@ -22,19 +25,23 @@ export default function AdminUpload() {
   
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [fileDescription, setFileDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [validationErrors, setValidationErrors] = useState<{row: number, field: string, message: string}[]>([]);
   
   const uploadMutation = useMutation({
-    mutationFn: async (donors: any[]) => {
+    mutationFn: async (data: { donors: any[], fileName: string, description: string }) => {
       return apiRequest('/api/donors/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          donors
+          donors: data.donors,
+          fileName: data.fileName,
+          description: data.description
         })
       });
     },
@@ -223,12 +230,22 @@ export default function AdminUpload() {
       return;
     }
     
-    uploadMutation.mutate(parsedData);
+    // Use the original file name without extension as the default display name
+    const fileTitle = displayName || fileName.replace(/\.[^/.]+$/, "");
+    const description = fileDescription || `Uploaded on ${new Date().toLocaleDateString()}`;
+    
+    uploadMutation.mutate({
+      donors: parsedData,
+      fileName: fileTitle,
+      description: description
+    });
   };
   
   const handleClearFile = () => {
     setFile(null);
     setFileName('');
+    setDisplayName('');
+    setFileDescription('');
     setParsedData([]);
     setValidationErrors([]);
   };
@@ -335,9 +352,37 @@ export default function AdminUpload() {
                     <Check className="h-4 w-4 text-green-500" />
                     <AlertTitle>Validation Successful</AlertTitle>
                     <AlertDescription>
-                      Your CSV file has been validated successfully. You can now proceed to the next step.
+                      Your CSV file has been validated successfully. You can now provide a name and description for this upload.
                     </AlertDescription>
                   </Alert>
+                )}
+                
+                {parsedData.length > 0 && validationErrors.length === 0 && (
+                  <div className="space-y-4 mt-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="display-name">Upload Name (Optional)</Label>
+                        <Input 
+                          id="display-name" 
+                          placeholder={fileName.replace(/\.[^/.]+$/, "")}
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">A name to help you identify this upload later</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="file-description">Description (Optional)</Label>
+                        <Textarea 
+                          id="file-description" 
+                          placeholder="Description of this donor file..."
+                          value={fileDescription}
+                          onChange={(e) => setFileDescription(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Add notes about this donor file upload</p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </CardContent>
               <CardFooter className="flex justify-between">

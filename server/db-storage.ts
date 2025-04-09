@@ -1,9 +1,9 @@
 import { eq, and, inArray } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, foodBanks, donors, userSettings,
-  type User, type FoodBank, type Donor, type UserSettings,
-  type InsertUser, type InsertFoodBank, type InsertDonor, type InsertUserSettings
+  users, foodBanks, donors, donorFiles, userSettings,
+  type User, type FoodBank, type Donor, type DonorFile, type UserSettings,
+  type InsertUser, type InsertFoodBank, type InsertDonor, type InsertDonorFile, type InsertUserSettings
 } from "@shared/schema";
 import { IStorage } from "./storage";
 // Define a simple hash function for impact URLs
@@ -123,6 +123,30 @@ export class DbStorage implements IStorage {
     return results[0];
   }
 
+  // Donor File methods
+  async getDonorFile(id: number): Promise<DonorFile | undefined> {
+    const results = await db.select().from(donorFiles).where(eq(donorFiles.id, id));
+    return results[0];
+  }
+
+  async getDonorFilesByFoodBankId(foodBankId: number): Promise<DonorFile[]> {
+    return await db.select().from(donorFiles).where(eq(donorFiles.foodBankId, foodBankId));
+  }
+
+  async createDonorFile(donorFile: InsertDonorFile): Promise<DonorFile> {
+    const results = await db.insert(donorFiles).values(donorFile).returning();
+    return results[0];
+  }
+
+  async updateDonorFile(id: number, donorFile: Partial<InsertDonorFile>): Promise<DonorFile | undefined> {
+    const results = await db
+      .update(donorFiles)
+      .set({ ...donorFile, updatedAt: new Date() })
+      .where(eq(donorFiles.id, id))
+      .returning();
+    return results[0];
+  }
+
   // Donor methods
   async getDonor(id: number): Promise<Donor | undefined> {
     const results = await db.select().from(donors).where(eq(donors.id, id));
@@ -141,6 +165,10 @@ export class DbStorage implements IStorage {
 
   async getDonorsByFoodBankId(foodBankId: number): Promise<Donor[]> {
     return await db.select().from(donors).where(eq(donors.foodBankId, foodBankId));
+  }
+  
+  async getDonorsByFileId(fileId: number): Promise<Donor[]> {
+    return await db.select().from(donors).where(eq(donors.donorFileId, fileId));
   }
 
   async createDonor(donor: InsertDonor & { impactUrl?: string }): Promise<Donor> {

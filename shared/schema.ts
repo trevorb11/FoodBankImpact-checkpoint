@@ -49,19 +49,36 @@ export const foodBanks = pgTable("foodBanks", {
 export const insertFoodBankSchema = createInsertSchema(foodBanks)
   .omit({ id: true, createdAt: true, updatedAt: true });
 
+// Donor files model for tracking uploaded donor files
+export const donorFiles = pgTable("donorFiles", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  recordCount: integer("recordCount").notNull(),
+  foodBankId: integer("foodBankId").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  uploadDate: timestamp("uploadDate").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export const insertDonorFileSchema = createInsertSchema(donorFiles)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
 // Donor model for storing donor information
 export const donors = pgTable("donors", {
   id: serial("id").primaryKey(),
   firstName: text("firstName").notNull(),
   lastName: text("lastName").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").notNull(),
   totalGiving: numeric("totalGiving").notNull(),
   firstGiftDate: timestamp("firstGiftDate"),
   lastGiftDate: timestamp("lastGiftDate"),
   largestGift: numeric("largestGift"),
   giftCount: integer("giftCount"),
   foodBankId: integer("foodBankId").notNull(),
-  impactUrl: text("impactUrl"),
+  donorFileId: integer("donorFileId"),
+  impactUrl: text("impactUrl").unique(),
   // Privacy controls
   isAnonymous: boolean("isAnonymous").default(false).notNull(),
   showFullName: boolean("showFullName").default(true).notNull(),
@@ -166,6 +183,9 @@ export type User = typeof users.$inferSelect;
 
 export type InsertFoodBank = z.infer<typeof insertFoodBankSchema>;
 export type FoodBank = typeof foodBanks.$inferSelect;
+
+export type InsertDonorFile = z.infer<typeof insertDonorFileSchema>;
+export type DonorFile = typeof donorFiles.$inferSelect;
 
 export type InsertDonor = z.infer<typeof insertDonorSchema>;
 export type Donor = typeof donors.$inferSelect;

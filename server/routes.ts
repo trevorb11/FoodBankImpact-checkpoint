@@ -288,6 +288,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const foodBank = await storage.getFoodBank(foodBankId);
     
+    // Create a donor file record to associate with these donors
+    const fileName = req.body.fileName || `Donor Upload ${new Date().toLocaleDateString()}`;
+    const fileDescription = req.body.description || "Uploaded donor data";
+    
     if (!foodBank) {
       return res.status(404).json({ message: "Food bank not found" });
     }
@@ -420,8 +424,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let failedDonors = [];
       
       try {
-        if (newDonors.length > 0) {
-          createdDonors = await storage.createDonors(newDonors);
+        // Create a donor file record first
+        const donorFile = await storage.createDonorFile({
+          name: fileName,
+          description: fileDescription,
+          recordCount: newDonors.length + updatedDonors.length,
+          foodBankId,
+          isActive: true
+        });
+        
+        // Add the donor file ID to all new donors
+        const donorsWithFileId = newDonors.map(donor => ({
+          ...donor,
+          donorFileId: donorFile.id
+        }));
+        
+        if (donorsWithFileId.length > 0) {
+          createdDonors = await storage.createDonors(donorsWithFileId);
         }
         
         for (const donor of updatedDonors) {
@@ -494,12 +513,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get donor files for current food bank
+  app.get("/api/my-donor-files", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const files = await storage.getDonorFilesByFoodBankId(req.session.foodBankId!);
+      return res.json(files);
+    } catch (error) {
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
   // Get donors for current food bank (authenticated route)
   app.get("/api/my-donors", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const donors = await storage.getDonorsByFoodBankId(req.session.foodBankId!);
       return res.json(donors);
     } catch (error) {
+      return res.status(500).json({ message: 'Server error' });
+    }
+  });
+  
+  // Get donors for a specific file
+  app.get("/api/donor-files/:id/donors", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const fileId = parseInt(req.params.id);
+      
+      if (isNaN(fileId)) {
+        return res.status(400).json({ message: "Invalid file ID" });
+      }
+      
+      // First get the donor file to verify it belongs to this food bank
+      const donorFile = await storage.getDonorFile(fileId);
+      
+      if (!donorFile) {
+        return res.status(404).json({ message: "Donor file not found" });
+      }
+      
+      // Security check - make sure the file belongs to this food bank
+      if (donorFile.foodBankId !== req.session.foodBankId) {
+        return res.status(403).json({ message: "Unauthorized access to donor file" });
+      }
+      
+      const donors = await storage.getDonorsByFileId(fileId);
+      return res.json(donors);
+    } catch (error) {
+      console.error('Error getting donors by file:', error);
       return res.status(500).json({ message: 'Server error' });
     }
   });

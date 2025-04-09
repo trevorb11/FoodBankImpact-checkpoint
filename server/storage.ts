@@ -8,6 +8,9 @@ import {
   donors,
   type Donor,
   type InsertDonor,
+  donorFiles,
+  type DonorFile,
+  type InsertDonorFile,
   userSettings,
   type UserSettings,
   type InsertUserSettings
@@ -31,11 +34,18 @@ export interface IStorage {
   createFoodBank(foodBank: InsertFoodBank): Promise<FoodBank>;
   updateFoodBank(id: number, foodBank: Partial<InsertFoodBank>): Promise<FoodBank | undefined>;
   
+  // Donor File methods
+  getDonorFile(id: number): Promise<DonorFile | undefined>;
+  getDonorFilesByFoodBankId(foodBankId: number): Promise<DonorFile[]>;
+  createDonorFile(donorFile: InsertDonorFile): Promise<DonorFile>;
+  updateDonorFile(id: number, donorFile: Partial<InsertDonorFile>): Promise<DonorFile | undefined>;
+  
   // Donor methods
   getDonor(id: number): Promise<Donor | undefined>;
   getDonorByEmail(email: string): Promise<Donor | undefined>;
   getDonorByImpactUrl(impactUrl: string): Promise<Donor | undefined>;
   getDonorsByFoodBankId(foodBankId: number): Promise<Donor[]>;
+  getDonorsByFileId(fileId: number): Promise<Donor[]>;
   createDonor(donor: InsertDonor & { impactUrl?: string }): Promise<Donor>;
   createDonors(donors: (InsertDonor & { impactUrl?: string })[]): Promise<Donor[]>;
   updateDonor(id: number, donor: Partial<InsertDonor & { impactUrl?: string }>): Promise<Donor | undefined>;
@@ -45,22 +55,26 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private foodBanks: Map<number, FoodBank>;
   private donors: Map<number, Donor>;
+  private donorFiles: Map<number, DonorFile>;
   private userSettingsMap: Map<number, UserSettings>;
   
   userCurrentId: number;
   foodBankCurrentId: number;
   donorCurrentId: number;
+  donorFileCurrentId: number;
   userSettingsCurrentId: number;
 
   constructor() {
     this.users = new Map();
     this.foodBanks = new Map();
     this.donors = new Map();
+    this.donorFiles = new Map();
     this.userSettingsMap = new Map();
     
     this.userCurrentId = 1;
     this.foodBankCurrentId = 1;
     this.donorCurrentId = 1;
+    this.donorFileCurrentId = 1;
     this.userSettingsCurrentId = 1;
     
     // Initialize with a default food bank
@@ -231,6 +245,51 @@ export class MemStorage implements IStorage {
     return updatedFoodBank;
   }
   
+  // Donor File methods
+  async getDonorFile(id: number): Promise<DonorFile | undefined> {
+    return this.donorFiles.get(id);
+  }
+  
+  async getDonorFilesByFoodBankId(foodBankId: number): Promise<DonorFile[]> {
+    return Array.from(this.donorFiles.values()).filter(
+      (file) => file.foodBankId === foodBankId
+    );
+  }
+  
+  async createDonorFile(donorFile: InsertDonorFile): Promise<DonorFile> {
+    const id = this.donorFileCurrentId++;
+    const now = new Date();
+    
+    const newDonorFile: DonorFile = {
+      id,
+      name: donorFile.name,
+      description: donorFile.description ?? null,
+      recordCount: donorFile.recordCount,
+      foodBankId: donorFile.foodBankId,
+      isActive: donorFile.isActive ?? true,
+      uploadDate: donorFile.uploadDate ?? now,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.donorFiles.set(id, newDonorFile);
+    return newDonorFile;
+  }
+  
+  async updateDonorFile(id: number, donorFile: Partial<InsertDonorFile>): Promise<DonorFile | undefined> {
+    const existingFile = this.donorFiles.get(id);
+    if (!existingFile) return undefined;
+    
+    const updatedFile = {
+      ...existingFile,
+      ...donorFile,
+      updatedAt: new Date()
+    };
+    
+    this.donorFiles.set(id, updatedFile);
+    return updatedFile;
+  }
+  
   // Donor methods
   async getDonor(id: number): Promise<Donor | undefined> {
     return this.donors.get(id);
@@ -254,6 +313,12 @@ export class MemStorage implements IStorage {
     );
   }
   
+  async getDonorsByFileId(fileId: number): Promise<Donor[]> {
+    return Array.from(this.donors.values()).filter(
+      (donor) => donor.donorFileId === fileId,
+    );
+  }
+  
   async createDonor(insertDonor: InsertDonor & { impactUrl?: string }): Promise<Donor> {
     const id = this.donorCurrentId++;
     const now = new Date();
@@ -265,6 +330,7 @@ export class MemStorage implements IStorage {
       email: insertDonor.email,
       totalGiving: insertDonor.totalGiving,
       foodBankId: insertDonor.foodBankId,
+      donorFileId: insertDonor.donorFileId ?? null,
       firstGiftDate: insertDonor.firstGiftDate ?? null,
       lastGiftDate: insertDonor.lastGiftDate ?? null,
       largestGift: insertDonor.largestGift ?? null,
