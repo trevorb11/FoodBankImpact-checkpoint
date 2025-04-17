@@ -1,0 +1,13 @@
+{
+  "name": "impact-wrapped-vanilla",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Vanilla HTML/CSS/JS implementation of Impact Wrapped",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
