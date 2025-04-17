@@ -183,6 +183,7 @@ const AdminPages = {
       
       uploadFormHeader.appendChild(formTitle);
       uploadFormHeader.appendChild(formDescription);
+      uploadFormHeader.appendChild(duplicateNote);
       
       // File upload dropzone
       const dropzone = document.createElement('div');
@@ -250,7 +251,7 @@ const AdminPages = {
       requiredColumnsList.className = 'list-disc pl-5 mb-4 space-y-1 text-sm text-muted-foreground';
       
       const requiredColumns = [
-        'email - Donor email address (must be unique)',
+        'email - Donor email address (duplicates will be updated automatically)',
         'firstName - Donor first name',
         'lastName - Donor last name',
         'donationAmount - Total donation amount in dollars'
@@ -284,7 +285,12 @@ const AdminPages = {
       
       const csvExample = document.createElement('div');
       csvExample.className = 'bg-muted p-3 rounded-md overflow-x-auto text-sm font-mono';
-      csvExample.innerHTML = 'email,firstName,lastName,donationAmount,donationDate,donationType<br>john@example.com,John,Doe,250,2023-01-15,one-time<br>jane@example.com,Jane,Smith,500,2023-02-20,recurring';
+      csvExample.innerHTML = 'email,firstName,lastName,donationAmount,donationDate,donationType<br>john@example.com,John,Doe,250,2023-01-15,one-time<br>jane@example.com,Jane,Smith,500,2023-02-20,recurring<br>john@example.com,John,Doe,300,2023-03-10,one-time<br>';
+      
+      // Add a note about duplicate handling
+      const duplicatesNote = document.createElement('div');
+      duplicatesNote.className = 'bg-blue-50 p-3 rounded-md my-4 text-xs text-blue-700';
+      duplicatesNote.innerHTML = '<strong>Note about duplicates:</strong> In the example above, the same email (john@example.com) appears twice. The system will handle this by updating the donor\'s information with the latest values. The first record creates the donor, and the second record updates their donation amount to 300.';
       
       csvHelp.appendChild(csvHelpTitle);
       csvHelp.appendChild(requiredColumnsTitle);
@@ -292,6 +298,7 @@ const AdminPages = {
       csvHelp.appendChild(optionalColumnsTitle);
       csvHelp.appendChild(optionalColumnsList);
       csvHelp.appendChild(csvExample);
+      csvHelp.appendChild(duplicatesNote);
       
       // Assemble upload content
       uploadContent.appendChild(uploadHeader);
