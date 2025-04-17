@@ -2,6 +2,121 @@
  * Admin pages for Impact Wrapped application
  */
 
+/**
+ * Parses CSV data into an array of donor objects
+ * @param {string} csvData CSV data as string
+ * @returns {Array} Array of donor objects
+ */
+function parseCSV(csvData) {
+  // Split the CSV into lines
+  const lines = csvData.split(/\r?\n/);
+  
+  // Extract headers (first line)
+  const headers = lines[0].split(',').map(header => header.trim().toLowerCase());
+  
+  // Map column names to standardized property names
+  const columnMap = {
+    'email': 'email',
+    'firstname': 'first_name',
+    'first name': 'first_name',
+    'first_name': 'first_name',
+    'lastname': 'last_name',
+    'last name': 'last_name',
+    'last_name': 'last_name',
+    'donationamount': 'total_giving',
+    'donation amount': 'total_giving',
+    'donation_amount': 'total_giving',
+    'totalgiving': 'total_giving',
+    'total giving': 'total_giving',
+    'total_giving': 'total_giving',
+    'amount': 'total_giving'
+  };
+  
+  // Initialize donors array
+  const donors = [];
+  
+  // Process data rows (skip header)
+  for (let i = 1; i < lines.length; i++) {
+    // Skip empty lines
+    if (!lines[i].trim()) continue;
+    
+    const values = lines[i].split(',').map(value => value.trim());
+    
+    // Create donor object
+    const donor = {};
+    
+    // Map values to properties
+    for (let j = 0; j < headers.length; j++) {
+      const header = headers[j];
+      const standardizedProperty = columnMap[header] || header;
+      
+      // Handle special case for total_giving (convert to number)
+      if (standardizedProperty === 'total_giving') {
+        donor[standardizedProperty] = parseFloat(values[j]) || 0;
+      } else {
+        donor[standardizedProperty] = values[j];
+      }
+    }
+    
+    // Add to donors array if it has required fields
+    if (donor.email && donor.first_name && donor.last_name && donor.total_giving) {
+      donors.push(donor);
+    }
+  }
+  
+  return donors;
+}
+
+/**
+ * Validates donor data
+ * @param {Array} donors Array of donor objects
+ * @returns {Object} Validation result with valid flag and error message
+ */
+function validateDonors(donors) {
+  if (!donors || donors.length === 0) {
+    return {
+      valid: false,
+      error: 'No valid donor records found in the file. Please check the format.'
+    };
+  }
+  
+  // Check for required fields in each donor
+  for (let i = 0; i < donors.length; i++) {
+    const donor = donors[i];
+    if (!donor.email) {
+      return {
+        valid: false,
+        error: `Row ${i + 1}: Missing email address`
+      };
+    }
+    
+    if (!donor.first_name) {
+      return {
+        valid: false,
+        error: `Row ${i + 1}: Missing first name`
+      };
+    }
+    
+    if (!donor.last_name) {
+      return {
+        valid: false,
+        error: `Row ${i + 1}: Missing last name`
+      };
+    }
+    
+    if (typeof donor.total_giving !== 'number' || isNaN(donor.total_giving)) {
+      return {
+        valid: false,
+        error: `Row ${i + 1}: Invalid donation amount. Must be a number.`
+      };
+    }
+  }
+  
+  return {
+    valid: true
+  };
+}
+
 const AdminPages = {
   // Admin upload page
   UploadPage: {
@@ -61,6 +176,10 @@ const AdminPages = {
       const formDescription = document.createElement('p');
       formDescription.className = 'text-sm text-muted-foreground mt-1';
       formDescription.textContent = 'Upload a CSV file containing your donor data. Required columns: email, firstName, lastName, donationAmount.';
+      
+      const duplicateNote = document.createElement('p');
+      duplicateNote.className = 'text-xs text-muted-foreground mt-1 italic';
+      duplicateNote.textContent = 'Note: Duplicate email addresses will be automatically updated rather than causing errors.';
       
       uploadFormHeader.appendChild(formTitle);
       uploadFormHeader.appendChild(formDescription);
@@ -284,24 +403,92 @@ const AdminPages = {
         uploadButton.disabled = true;
         uploadButton.innerHTML = '<div class="loader mx-auto"></div>';
         
-        // In a real app, we would upload the file here
-        // For this demo, we'll just simulate a response
-        setTimeout(() => {
+        try {
+          // Read the CSV file
+          const reader = new FileReader();
+          reader.onload = async function(event) {
+            const csvData = event.target.result;
+            
+            // Parse CSV into array of donor objects
+            const donors = parseCSV(csvData);
+            
+            // Validate donor data
+            const validationResult = validateDonors(donors);
+            if (!validationResult.valid) {
+              Toast.show({
+                title: 'Validation Error',
+                description: validationResult.error,
+                variant: 'destructive'
+              });
+              
+              // Reset button
+              uploadButton.textContent = 'Upload and Process Donor Data';
+              uploadButton.disabled = false;
+              return;
+            }
+            
+            try {
+              // Upload to server - now with proper duplicate handling
+              const uploadData = {
+                fileName: file.name,
+                description: 'Uploaded donor data',
+                donors: donors
+              };
+              
+              const response = await API.donors.uploadDonors(uploadData);
+              
+              // Show success message with details about new/updated donors
+              Toast.show({
+                title: 'Upload Complete',
+                description: `${response.message}`,
+                variant: 'success'
+              });
+              
+              // Reset form
+              fileInput.value = '';
+              fileInfo.classList.add('hidden');
+              uploadButton.textContent = 'Upload and Process Donor Data';
+              uploadButton.disabled = true;
+              
+              // Navigate to dashboard
+              Router.navigate('/admin');
+            } catch (error) {
+              Toast.show({
+                title: 'Upload Error',
+                description: error.message || 'Failed to upload donor data',
+                variant: 'destructive'
+              });
+              
+              // Reset button
+              uploadButton.textContent = 'Upload and Process Donor Data';
+              uploadButton.disabled = false;
+            }
+          };
+          
+          reader.onerror = function() {
+            Toast.show({
+              title: 'File Error',
+              description: 'Failed to read CSV file',
+              variant: 'destructive'
+            });
+            
+            // Reset button
+            uploadButton.textContent = 'Upload and Process Donor Data';
+            uploadButton.disabled = false;
+          };
+          
+          reader.readAsText(file);
+        } catch (error) {
           Toast.show({
-            title: 'Upload Complete',
-            description: 'Your donor data has been successfully processed.',
-            variant: 'success'
+            title: 'Error',
+            description: error.message || 'An unexpected error occurred',
+            variant: 'destructive'
           });
           
-          // Reset form
-          fileInput.value = '';
-          fileInfo.classList.add('hidden');
+          // Reset button
           uploadButton.textContent = 'Upload and Process Donor Data';
-          uploadButton.disabled = true;
-          
-          // Navigate to dashboard
-          Router.navigate('/admin');
-        }, 2000);
+          uploadButton.disabled = false;
+        }
       });
     }
   },
