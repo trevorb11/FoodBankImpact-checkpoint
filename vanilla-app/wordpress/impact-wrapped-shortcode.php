@@ -148,6 +148,30 @@ class Impact_Wrapped_Shortcode {
                 });
             ";
             
+            // Define a proper initialization script
+            $script = "
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (window.ImpactWrappedWP) {
+                        // Configure WordPress integration
+                        window.ImpactWrappedWP.init({
+                            baseUrl: '" . esc_js(rest_url('impact-wrapped/v1')) . "',
+                            apiPrefix: '',
+                            mountPoint: '#impact-wrapped-app'
+                        }).mount().then(function(app) {
+                            console.log('Impact Wrapped initialized successfully');
+                            
+                            // Set initial page if provided
+                            var initialPage = document.querySelector('#impact-wrapped-app').dataset.initialPage;
+                            if (initialPage && app && app.navigate) {
+                                app.navigate('/' + initialPage);
+                            }
+                        }).catch(function(error) {
+                            console.error('Failed to initialize Impact Wrapped:', error);
+                        });
+                    }
+                });
+            ";
+            
             wp_add_inline_script('impact-wrapped-app', $script);
         }
     }

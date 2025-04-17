@@ -1,5 +1,6 @@
 /**
  * Toast notification system for Impact Wrapped application
+ * - Compatible with WordPress integration
  */
 
 const Toast = {
@@ -8,18 +9,26 @@ const Toast = {
   
   // Toast configuration
   defaultDuration: 5000, // 5 seconds
+  containerClass: 'toast-container',
   
   /**
    * Initializes the toast system
+   * @param {Object} options Toast system options
+   * @param {string} options.containerClass Custom container class for WordPress integration
    */
-  init() {
+  init(options = {}) {
+    // Apply options
+    if (options.containerClass) {
+      this.containerClass = options.containerClass;
+    }
+    
     // Get or create toast container
-    this.container = document.getElementById('toast-container');
+    this.container = document.getElementById(this.containerClass);
     
     if (!this.container) {
       this.container = document.createElement('div');
-      this.container.id = 'toast-container';
-      this.container.className = 'fixed top-4 right-4 z-50 flex flex-col gap-2';
+      this.container.id = this.containerClass;
+      this.container.className = `fixed top-4 right-4 z-50 flex flex-col gap-2 ${this.containerClass}`;
       document.body.appendChild(this.container);
     }
   },

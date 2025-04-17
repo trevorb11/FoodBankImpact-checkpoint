@@ -1,8 +1,29 @@
 /**
  * API client for Impact Wrapped application
+ * - Compatible with WordPress integration
  */
 
 const API = {
+  // API configuration
+  baseUrl: '',
+  apiPrefix: '/api',
+  wordPressMode: false,
+  
+  /**
+   * Configures the API client
+   * @param {Object} config API configuration
+   * @param {string} config.baseUrl Base URL for API requests (used in WordPress mode)
+   * @param {string} config.apiPrefix API endpoint prefix
+   * @param {boolean} config.wordPressMode Whether to use WordPress mode
+   */
+  configure(config = {}) {
+    if (config.baseUrl !== undefined) this.baseUrl = config.baseUrl;
+    if (config.apiPrefix !== undefined) this.apiPrefix = config.apiPrefix;
+    if (config.wordPressMode !== undefined) this.wordPressMode = config.wordPressMode;
+    
+    console.log(`API configured: ${this.wordPressMode ? 'WordPress' : 'Standalone'} mode, baseUrl: ${this.baseUrl || '(none)'}, prefix: ${this.apiPrefix}`);
+  },
+  
   /**
    * Makes a request to the API
    * @param {string} endpoint API endpoint
@@ -10,7 +31,26 @@ const API = {
    * @returns {Promise} Promise with response data
    */
   async request(endpoint, options = {}) {
-    const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    // Handle URL construction based on mode
+    let url;
+    
+    if (this.wordPressMode) {
+      // WordPress mode - construct full URL with baseUrl
+      if (endpoint.startsWith('http')) {
+        // Already a full URL
+        url = endpoint;
+      } else {
+        // Construct URL with baseUrl and apiPrefix
+        const endpointWithPrefix = endpoint.startsWith(this.apiPrefix) ? 
+          endpoint : 
+          `${this.apiPrefix}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+        
+        url = `${this.baseUrl}${endpointWithPrefix}`;
+      }
+    } else {
+      // Standard mode - use relative URL
+      url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    }
     
     // Default headers
     const headers = {
@@ -21,7 +61,8 @@ const API = {
     // Build request options
     const requestOptions = {
       ...options,
-      headers
+      headers,
+      credentials: 'include' // Include cookies in all requests
     };
     
     try {

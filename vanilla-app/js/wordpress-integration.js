@@ -36,36 +36,13 @@
       originalConfig.mountPoint = config.mountPoint || '#impact-wrapped-app';
       originalConfig.initialized = true;
 
-      // Override API URL settings for WordPress
-      if (window.API) {
-        const originalRequest = window.API.request;
-        window.API.request = function(endpoint, options = {}) {
-          const url = endpoint.startsWith('/') ? 
-            `${originalConfig.baseUrl}${originalConfig.apiPrefix}${endpoint}` : 
-            `${originalConfig.baseUrl}${originalConfig.apiPrefix}/${endpoint}`;
-          
-          return fetch(url, {
-            ...options,
-            headers: {
-              'Content-Type': 'application/json',
-              ...(options.headers || {})
-            },
-            credentials: 'include'
-          })
-          .then(response => {
-            if (response.status === 204) return null;
-            return response.json().then(data => {
-              if (!response.ok) {
-                throw new Error(data.message || 'An error occurred');
-              }
-              return data;
-            });
-          })
-          .catch(error => {
-            console.error('WordPress API Error:', error);
-            throw error;
-          });
-        };
+      // Configure API for WordPress mode
+      if (window.API && window.API.configure) {
+        window.API.configure({
+          baseUrl: originalConfig.baseUrl,
+          apiPrefix: originalConfig.apiPrefix,
+          wordPressMode: true
+        });
       }
 
       // Initialize router to work within WordPress
@@ -122,8 +99,9 @@
     /**
      * Mount the Impact Wrapped app to the DOM
      * @param {string} [selector] Optional CSS selector to override the mount point
+     * @returns {Promise} Promise that resolves when app is mounted
      */
-    mount(selector) {
+    async mount(selector) {
       const mountPoint = document.querySelector(selector || originalConfig.mountPoint);
       
       if (!mountPoint) {
@@ -131,24 +109,52 @@
         return;
       }
       
-      // Handle initial routing
-      if (window.Router) {
-        // Initialize app with the correct route based on hash
-        const path = window.location.hash.slice(1) || '/';
-        const route = window.Router.routes.find(route => route.path === path) || 
-                      window.Router.routes.find(route => route.path === '/');
+      // Show loading indicator
+      mountPoint.innerHTML = '<div class="impact-wrapped-loading">Loading Impact Wrapped...</div>';
+      
+      // Check if we should use the new initialization method
+      if (window.ImpactWrappedInit) {
+        try {
+          // Initialize the app with WordPress options
+          const app = await window.ImpactWrappedInit({
+            containerId: mountPoint.id,
+            wordPressMode: true
+          });
+          
+          // Store the app instance for later use
+          this.app = app;
+          
+          console.log('Impact Wrapped mounted in WordPress mode');
+          return app;
+        } catch (error) {
+          console.error('Failed to mount Impact Wrapped:', error);
+          mountPoint.innerHTML = '<div class="impact-wrapped-error">Failed to load Impact Wrapped</div>';
+        }
+      } else {
+        // Fallback to the old method
+        console.warn('Using legacy mounting method');
         
-        if (route) {
-          // Clear mount point
-          mountPoint.innerHTML = '';
+        // Handle initial routing
+        if (window.Router) {
+          // Initialize app with the correct route based on hash
+          const path = window.location.hash.slice(1) || '/';
+          const route = window.Router.routes.find(route => route.path === path) || 
+                        window.Router.routes.find(route => route.path === '/');
           
-          // Render the page
-          const page = route.handler();
-          mountPoint.appendChild(page);
-          
-          // Initialize page if needed
-          if (route.init) {
-            route.init();
+          if (route) {
+            // Clear mount point
+            mountPoint.innerHTML = '';
+            
+            // Render the page
+            const page = route.handler();
+            mountPoint.appendChild(page);
+            
+            // Initialize page if needed
+            if (route.init) {
+              route.init();
+            }
+            
+            console.log('Impact Wrapped mounted using legacy method');
           }
         }
       }
