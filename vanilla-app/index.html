@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>Impact Wrapped - Show Donors Their Impact</title>
+  <!-- Load TailwindCSS from CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Load our custom CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Set up Tailwind theme -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#0ea5e9',
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8', 
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e'
+            },
+            background: '#ffffff',
+            foreground: '#0f172a',
+            muted: {
+              DEFAULT: '#f1f5f9',
+              foreground: '#64748b'
+            },
+            border: '#e2e8f0'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans antialiased bg-background text-foreground">
+  <div id="app" class="flex flex-col min-h-screen">
+    <!-- App content will be loaded here by JavaScript router -->
+  </div>
+
+  <!-- Toast container for notifications -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+  <!-- App scripts -->
+  <script src="js/util.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/pages.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
