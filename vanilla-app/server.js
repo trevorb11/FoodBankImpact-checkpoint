@@ -3,28 +3,28 @@
  */
 
 import express from 'express';
-import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// Convert ESM __dirname 
+// Get the current directory
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 // Create Express app
 const app = express();
-const server = createServer(app);
+const PORT = process.env.PORT || 3000;
 
-// Serve static files
+// Set up static file serving
 app.use(express.static(__dirname));
 
-// Redirect all routes to index.html for client-side routing
+// For all routes not matched by static files, serve index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Vanilla Impact Wrapped app running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Impact Wrapped vanilla app running at http://localhost:${PORT}`);
+  console.log('Press Ctrl+C to stop');
 });
