@@ -1,0 +1,2 @@
+run = "cd vanilla-app && npm start"
+language = "nodejs"

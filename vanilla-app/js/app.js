@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Admin routes (require authentication)
   Router.register('/admin', Pages.AdminDashboard.render, { requireAuth: true });
+  Router.register('/admin/upload-new', AdminPages.UploadPage.render, { requireAuth: true });
+  Router.register('/admin/configure', AdminPages.ConfigurePage.render, { requireAuth: true });
   
   // Set up 404 handler
   Router.setNotFoundHandler(Pages.NotFound.render);
@@ -29,6 +31,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Re-render current page on auth changes
     Router.handleRoute(Router.currentPath);
   });
+  
+  // Component initialization functions
+  const initializePageComponents = () => {
+    // Check if we're on the upload page
+    if (window.location.pathname === '/admin/upload-new') {
+      AdminPages.UploadPage.init();
+    }
+  };
+  
+  // Initialize components after route changes
+  Router.onAfterRouteChange = initializePageComponents;
+  
+  // Run initial component initialization
+  initializePageComponents();
   
   // Initialize Lucide icons if available
   if (window.lucide) {

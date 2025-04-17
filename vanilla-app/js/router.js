@@ -15,6 +15,9 @@ const Router = {
   // App container element
   container: null,
   
+  // After route change callback
+  onAfterRouteChange: null,
+  
   /**
    * Initializes the router
    */
@@ -152,6 +155,11 @@ const Router = {
     
     // Initialize any components in the new page
     this.initPageComponents();
+    
+    // Call onAfterRouteChange callback if defined
+    if (typeof this.onAfterRouteChange === 'function') {
+      this.onAfterRouteChange();
+    }
   },
   
   /**

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background shape -->
+  <rect width="180" height="40" rx="8" fill="#0ea5e9" opacity="0.1" />
+  
+  <!-- Text elements -->
+  <text x="10" y="28" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#0ea5e9">Impact</text>
+  <text x="80" y="28" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Wrapped</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="160" cy="20" r="10" fill="#0ea5e9" opacity="0.2" />
+  <path d="M155 20L159 24L165 16" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
