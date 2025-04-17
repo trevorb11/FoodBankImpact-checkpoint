@@ -1,5 +1,6 @@
 /**
  * Client-side router for Impact Wrapped application
+ * - Supports both direct usage and WordPress integration
  */
 
 const Router = {
@@ -18,24 +19,47 @@ const Router = {
   // After route change callback
   onAfterRouteChange: null,
   
+  // WordPress mode flag
+  isWordPressMode: false,
+  
   /**
    * Initializes the router
+   * @param {Object} options Router initialization options
+   * @param {string} [options.containerId='app'] Container ID
+   * @param {boolean} [options.wordPressMode=false] Whether in WordPress mode
    */
-  init() {
+  init(options = {}) {
+    const containerId = options.containerId || 'app';
+    this.isWordPressMode = options.wordPressMode || false;
+    
     // Get app container
-    this.container = document.getElementById('app');
+    this.container = document.getElementById(containerId);
     if (!this.container) {
-      console.error('App container not found');
+      console.error(`App container with ID "${containerId}" not found`);
       return;
     }
     
-    // Listen for popstate events (back/forward navigation)
-    window.addEventListener('popstate', () => {
+    // In WordPress mode, check for hash-based routing
+    if (this.isWordPressMode) {
+      // Listen for hashchange events
+      window.addEventListener('hashchange', () => {
+        const path = window.location.hash.slice(1) || '/';
+        this.handleRoute(path);
+      });
+      
+      // Initial route handling from hash
+      const initialPath = window.location.hash.slice(1) || '/';
+      this.handleRoute(initialPath);
+    } else {
+      // Standard SPA routing
+      // Listen for popstate events (back/forward navigation)
+      window.addEventListener('popstate', () => {
+        this.handleRoute(window.location.pathname);
+      });
+      
+      // Initial route handling
       this.handleRoute(window.location.pathname);
-    });
-    
-    // Initial route handling
-    this.handleRoute(window.location.pathname);
+    }
   },
   
   /**
@@ -66,15 +90,29 @@ const Router = {
    * @param {boolean} replace Whether to replace history entry
    */
   navigate(path, replace = false) {
-    // Update history
-    if (replace) {
-      window.history.replaceState(null, '', path);
+    if (this.isWordPressMode) {
+      // In WordPress mode, use hash-based routing
+      const currentUrl = window.location.href;
+      const baseUrl = currentUrl.split('#')[0];
+      
+      if (replace) {
+        window.location.replace(`${baseUrl}#${path}`);
+      } else {
+        window.location.href = `${baseUrl}#${path}`;
+      }
+      
+      // The hashchange event will trigger handleRoute
     } else {
-      window.history.pushState(null, '', path);
+      // Standard history API based routing
+      if (replace) {
+        window.history.replaceState(null, '', path);
+      } else {
+        window.history.pushState(null, '', path);
+      }
+      
+      // Handle the new route
+      this.handleRoute(path);
     }
-    
-    // Handle the new route
-    this.handleRoute(path);
   },
   
   /**

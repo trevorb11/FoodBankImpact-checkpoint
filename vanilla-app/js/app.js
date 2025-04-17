@@ -1,11 +1,19 @@
 /**
  * Main application entry point for Impact Wrapped
+ * - Supports both standalone mode and WordPress embedding
  */
 
-// Initialize all components
-document.addEventListener('DOMContentLoaded', async () => {
+// Main initialization function
+const initializeApp = async (options = {}) => {
+  const isWordPressMode = options.wordPressMode || false;
+  const containerId = options.containerId || 'app';
+  
+  console.log(`Initializing Impact Wrapped in ${isWordPressMode ? 'WordPress' : 'standalone'} mode`);
+  
   // Initialize the toast system
-  Toast.init();
+  Toast.init({
+    containerClass: isWordPressMode ? 'impact-wrapped-toasts' : 'toast-container'
+  });
   
   // Initialize authentication
   await Auth.init();
@@ -23,8 +31,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Set up 404 handler
   Router.setNotFoundHandler(Pages.NotFound.render);
   
-  // Initialize router
-  Router.init();
+  // Initialize router with options
+  Router.init({
+    containerId: containerId,
+    wordPressMode: isWordPressMode
+  });
   
   // Watch for auth changes
   Auth.subscribe(authState => {
@@ -34,9 +45,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Component initialization functions
   const initializePageComponents = () => {
-    // Check if we're on the upload page
-    if (window.location.pathname === '/admin/upload-new') {
+    // Check if we're on the upload page - handle both URL path and hash-based routing
+    const currentPath = isWordPressMode ? 
+      (window.location.hash.slice(1) || '/') : 
+      window.location.pathname;
+      
+    if (currentPath === '/admin/upload-new') {
       AdminPages.UploadPage.init();
+    } else if (currentPath === '/admin/configure') {
+      AdminPages.ConfigurePage.init && AdminPages.ConfigurePage.init();
     }
   };
   
@@ -52,7 +69,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   console.log('Impact Wrapped application initialized');
-});
+  
+  // Return the app API for external control
+  return {
+    navigate: (path) => Router.navigate(path),
+    refresh: () => Router.handleRoute(Router.currentPath)
+  };
+};
+
+// Auto-initialize in standalone mode
+if (!window.ImpactWrappedWP) {
+  document.addEventListener('DOMContentLoaded', async () => {
+    window.ImpactWrappedApp = await initializeApp();
+  });
+} else {
+  // Export the initializer for WordPress integration
+  window.ImpactWrappedInit = initializeApp;
+}
 
 // Create error reporting mechanism
 window.addEventListener('error', event => {
