@@ -1,37 +1,56 @@
 /**
- * Authentication system for Impact Wrapped application
+ * Authentication module for Impact Wrapped application
  */
 
 const Auth = {
-  // Current user state
+  // Auth state
+  isAuthenticated: false,
   user: null,
-  loading: true,
   
-  // Event listeners
-  listeners: [],
+  // Subscribers to auth state changes
+  subscribers: [],
   
   /**
-   * Initializes the authentication system
-   * @returns {Promise} Promise that resolves when auth is initialized
+   * Initializes the auth module
+   * @returns {Promise} Promise that resolves when initialization is complete
    */
   async init() {
     try {
-      this.loading = true;
-      this.notifyListeners();
-      
-      // Check if user is already logged in
-      const userData = await API.auth.getCurrentUser();
-      if (userData) {
-        this.user = userData;
-      }
-      
-      return this.user;
+      const currentUser = await API.Auth.getCurrentUser();
+      this.setUser(currentUser);
     } catch (error) {
-      console.error('Auth initialization error:', error);
-      return null;
-    } finally {
-      this.loading = false;
-      this.notifyListeners();
+      // User is not authenticated, that's okay
+      this.setUser(null);
+    }
+    
+    return Promise.resolve();
+  },
+  
+  /**
+   * Sets the current user and updates auth state
+   * @param {Object|null} user User object or null if not authenticated
+   */
+  setUser(user) {
+    this.user = user;
+    this.isAuthenticated = !!user;
+    
+    // Notify subscribers
+    this.notifySubscribers();
+  },
+  
+  /**
+   * Registers for signup
+   * @param {string} username Username
+   * @param {string} password Password
+   * @returns {Promise} Promise that resolves with the user
+   */
+  async register(username, password) {
+    try {
+      const user = await API.Auth.register(username, password);
+      this.setUser(user);
+      return user;
+    } catch (error) {
+      throw error;
     }
   },
   
@@ -39,73 +58,15 @@ const Auth = {
    * Logs in a user
    * @param {string} username Username
    * @param {string} password Password
-   * @returns {Promise<boolean>} Promise with login success
+   * @returns {Promise} Promise that resolves with the user
    */
   async login(username, password) {
     try {
-      this.loading = true;
-      this.notifyListeners();
-      
-      const userData = await API.auth.login(username, password);
-      
-      if (userData) {
-        this.user = userData;
-        Toast.show({
-          title: 'Login successful',
-          description: `Welcome back, ${userData.username}!`
-        });
-        this.notifyListeners();
-        return true;
-      }
-      
-      return false;
+      const user = await API.Auth.login(username, password);
+      this.setUser(user);
+      return user;
     } catch (error) {
-      Toast.show({
-        title: 'Login failed',
-        description: 'Invalid username or password',
-        variant: 'error'
-      });
-      return false;
-    } finally {
-      this.loading = false;
-      this.notifyListeners();
-    }
-  },
-  
-  /**
-   * Registers a new user
-   * @param {string} username Username
-   * @param {string} password Password
-   * @returns {Promise<boolean>} Promise with registration success
-   */
-  async register(username, password) {
-    try {
-      this.loading = true;
-      this.notifyListeners();
-      
-      const userData = await API.auth.register(username, password);
-      
-      if (userData) {
-        this.user = userData;
-        Toast.show({
-          title: 'Registration successful',
-          description: 'Your account has been created'
-        });
-        this.notifyListeners();
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      Toast.show({
-        title: 'Registration failed',
-        description: 'Username may already be taken',
-        variant: 'error'
-      });
-      return false;
-    } finally {
-      this.loading = false;
-      this.notifyListeners();
+      throw error;
     }
   },
   
@@ -115,74 +76,45 @@ const Auth = {
    */
   async logout() {
     try {
-      this.loading = true;
-      this.notifyListeners();
-      
-      await API.auth.logout();
-      this.user = null;
-      
-      Toast.show({
-        title: 'Logged out',
-        description: 'You have been logged out successfully'
-      });
-      
-      // Navigate to home page after logout
-      Router.navigate('/');
-      
-      return true;
+      await API.Auth.logout();
+      this.setUser(null);
     } catch (error) {
-      Toast.show({
-        title: 'Logout failed',
-        description: 'Failed to log out',
-        variant: 'error'
-      });
-      return false;
-    } finally {
-      this.loading = false;
-      this.notifyListeners();
+      throw error;
     }
   },
   
   /**
    * Subscribes to auth state changes
-   * @param {function} listener Listener function
+   * @param {function} callback Callback function
    * @returns {function} Unsubscribe function
    */
-  subscribe(listener) {
-    this.listeners.push(listener);
+  subscribe(callback) {
+    this.subscribers.push(callback);
     
-    // Call listener immediately with current state
-    listener({
-      user: this.user,
-      loading: this.loading,
-      isAuthenticated: !!this.user
+    // Immediately call with current state
+    callback({
+      isAuthenticated: this.isAuthenticated,
+      user: this.user
     });
     
     // Return unsubscribe function
     return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
+      this.subscribers = this.subscribers.filter(cb => cb !== callback);
     };
   },
   
   /**
-   * Notifies all listeners of auth state changes
+   * Notifies subscribers of auth state changes
    */
-  notifyListeners() {
+  notifySubscribers() {
     const authState = {
-      user: this.user,
-      loading: this.loading,
-      isAuthenticated: !!this.user
+      isAuthenticated: this.isAuthenticated,
+      user: this.user
     };
     
-    this.listeners.forEach(listener => listener(authState));
-  },
-  
-  /**
-   * Checks if user is authenticated
-   * @returns {boolean} Whether user is authenticated
-   */
-  get isAuthenticated() {
-    return !!this.user;
+    this.subscribers.forEach(callback => {
+      callback(authState);
+    });
   }
 };
 

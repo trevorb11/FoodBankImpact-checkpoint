@@ -191,24 +191,76 @@ export class DbStorage implements IStorage {
       impactUrl: donor.impactUrl || generateImpactUrlHash(donor.email)
     }));
     
-    // First, let's check for existing emails to avoid the unique constraint error
-    // Check each donor one by one if they already exist in the database
+    // Process in batches to handle potential duplicates
+    const allResults: Donor[] = [];
+    const failedDonors: any[] = [];
+    
+    // Create a set to track emails we've already seen within this batch
+    const processedEmails = new Set<string>();
+    
     for (const donor of donorsWithUrls) {
-      const existingDonor = await this.getDonorByEmail(donor.email);
-      if (existingDonor) {
-        // Construct a detailed error with the duplicate information
-        const error = new Error(`Duplicate email detected: ${donor.email}`);
-        (error as any).duplicateInfo = {
+      const lowerEmail = donor.email.toLowerCase();
+      
+      // Skip if we've already processed this email in this batch
+      if (processedEmails.has(lowerEmail)) {
+        console.log(`Skipping duplicate email within batch: ${donor.email}`);
+        continue;
+      }
+      
+      // Mark this email as processed for this batch
+      processedEmails.add(lowerEmail);
+      
+      try {
+        // Check if this donor already exists in the database
+        const existingDonor = await this.getDonorByEmail(donor.email);
+        
+        if (existingDonor) {
+          // Update the existing donor instead of creating a new one
+          const updatedDonor = await this.updateDonor(existingDonor.id, {
+            firstName: donor.firstName,
+            lastName: donor.lastName,
+            totalGiving: donor.totalGiving,
+            firstGiftDate: donor.firstGiftDate,
+            lastGiftDate: donor.lastGiftDate,
+            largestGift: donor.largestGift,
+            giftCount: donor.giftCount,
+            foodBankId: donor.foodBankId,
+            isAnonymous: donor.isAnonymous,
+            showFullName: donor.showFullName,
+            showEmail: donor.showEmail,
+            allowSharing: donor.allowSharing,
+            optOutDate: donor.optOutDate,
+            donorFileId: donor.donorFileId
+          });
+          
+          if (updatedDonor) {
+            allResults.push(updatedDonor);
+          }
+        } else {
+          // Create a new donor
+          const results = await db.insert(donors).values([donor]).returning();
+          if (results.length > 0) {
+            allResults.push(results[0]);
+          }
+        }
+      } catch (error) {
+        console.error(`Error processing donor ${donor.email}:`, error);
+        failedDonors.push({
           email: donor.email,
-          name: `${donor.firstName} ${donor.lastName}`
-        };
-        throw error;
+          name: `${donor.firstName} ${donor.lastName}`,
+          error: error instanceof Error ? error.message : String(error)
+        });
       }
     }
     
-    // If no duplicates, proceed with insertion
-    const results = await db.insert(donors).values(donorsWithUrls).returning();
-    return results;
+    // If we couldn't process any donors, throw an error with details
+    if (allResults.length === 0 && failedDonors.length > 0) {
+      const error = new Error(`Failed to process donors: ${failedDonors.length} failures`);
+      (error as any).failedDonors = failedDonors;
+      throw error;
+    }
+    
+    return allResults;
   }
 
   async updateDonor(id: number, donor: Partial<InsertDonor & { impactUrl?: string }>): Promise<Donor | undefined> {

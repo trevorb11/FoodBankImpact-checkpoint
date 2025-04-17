@@ -2,50 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-  <title>Impact Wrapped - Show Donors Their Impact</title>
-  <!-- Load TailwindCSS from CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Load our custom CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impact Wrapped - Food Bank Donor Impact Visualization</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="/images/impact-wrapped-logo.svg" type="image/svg+xml">
+  
+  <!-- CSS -->
   <link rel="stylesheet" href="css/styles.css">
-  <!-- Set up Tailwind theme -->
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: {
-              DEFAULT: '#0ea5e9',
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              200: '#bae6fd',
-              300: '#7dd3fc',
-              400: '#38bdf8', 
-              500: '#0ea5e9',
-              600: '#0284c7',
-              700: '#0369a1',
-              800: '#075985',
-              900: '#0c4a6e'
-            },
-            background: '#ffffff',
-            foreground: '#0f172a',
-            muted: {
-              DEFAULT: '#f1f5f9',
-              foreground: '#64748b'
-            },
-            border: '#e2e8f0'
-          }
-        }
-      }
-    }
-  </script>
+  
+  <!-- Meta tags -->
+  <meta name="description" content="Impact Wrapped - A platform empowering food bank donor experiences through innovative impact visualization and storytelling">
+  <meta name="keywords" content="food bank, donor impact, visualization, metrics, social impact">
+  
+  <!-- Open Graph tags -->
+  <meta property="og:title" content="Impact Wrapped">
+  <meta property="og:description" content="Visualize the impact of your food bank donations">
+  <meta property="og:image" content="/images/impact-wrapped-logo.png">
+  <meta property="og:url" content="https://impactwrapped.org">
+  <meta property="og:type" content="website">
 </head>
-<body class="font-sans antialiased bg-background text-foreground">
-  <div id="app" class="flex flex-col min-h-screen">
-    <!-- App content will be loaded here by JavaScript router -->
-  </div>
+<body>
+  <!-- App container -->
+  <div id="app"></div>
 
   <!-- Toast container for notifications -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>

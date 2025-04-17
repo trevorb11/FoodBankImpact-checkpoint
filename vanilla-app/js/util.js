@@ -1,172 +1,176 @@
 /**
- * Utility functions for the Impact Wrapped application
+ * Utility functions for Impact Wrapped application
  */
 
-// Helper to combine class names
-function cn(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-/**
- * Calculates impact metrics based on donation amount using food bank specific metrics if available
- * @param {number} amount Donation amount in dollars
- * @param {Object} foodBank Optional food bank with custom impact factors
- * @returns {Object} Object with calculated impact metrics
- */
-function calculateImpactMetrics(amount, foodBank = null) {
-  // Default values based on Feeding America metrics
-  const dollarsPerMeal = foodBank?.dollarsPerMeal || 0.20;
-  const mealsPerPerson = foodBank?.mealsPerPerson || 3;
-  const poundsPerMeal = foodBank?.poundsPerMeal || 1.2;
-  const co2PerPound = foodBank?.co2PerPound || 2.5;
-  const waterPerPound = foodBank?.waterPerPound || 108;
-
-  // Calculate metrics
-  const meals = Math.round(amount / dollarsPerMeal);
-  const peopleServed = Math.round(meals / mealsPerPerson);
-  const poundsSaved = Math.round(meals * poundsPerMeal);
-  const co2Saved = Math.round(poundsSaved * co2PerPound);
-  const waterSaved = Math.round(poundsSaved * waterPerPound);
-
-  return {
-    meals,
-    peopleServed,
-    poundsSaved,
-    co2Saved,
-    waterSaved
-  };
-}
-
-/**
- * Formats a date to a readable string
- * @param {string|Date} dateString Date string or Date object
- * @returns {string} Formatted date string
- */
-function formatDate(dateString) {
-  if (!dateString) return '';
+const Util = {
+  /**
+   * Formats a number as currency
+   * @param {number} value Number to format
+   * @param {string} locale Locale to use for formatting
+   * @param {string} currency Currency code
+   * @returns {string} Formatted currency string
+   */
+  formatCurrency(value, locale = 'en-US', currency = 'USD') {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency
+    }).format(value);
+  },
   
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(date);
-}
-
-/**
- * Generates a unique hash for donor impact URLs
- * @param {string} email Donor email
- * @returns {string} Hashed string
- */
-function generateImpactUrlHash(email) {
-  // Simple hash function for demo purposes
-  // In production, use a proper crypto library
-  let hash = 0;
-  for (let i = 0; i < email.length; i++) {
-    const char = email.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(16);
-}
-
-/**
- * Copies text to clipboard
- * @param {string} text Text to copy
- * @returns {Promise} Promise that resolves when text is copied
- */
-async function copyToClipboard(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (err) {
-    console.error('Failed to copy text: ', err);
-    return false;
-  }
-}
-
-/**
- * Creates DOM element with attributes and children
- * @param {string} tag HTML tag name
- * @param {Object} attrs Attributes to set on element
- * @param {Array|Node|string} children Children to append
- * @returns {HTMLElement} Created element
- */
-function createElement(tag, attrs = {}, children = []) {
-  const element = document.createElement(tag);
+  /**
+   * Formats a date
+   * @param {string|Date} date Date to format
+   * @param {Object} options Formatting options
+   * @returns {string} Formatted date string
+   */
+  formatDate(date, options = {}) {
+    const defaultOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    };
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    return new Intl.DateTimeFormat('en-US', { ...defaultOptions, ...options }).format(dateObj);
+  },
   
-  // Set attributes
-  Object.entries(attrs).forEach(([key, value]) => {
-    if (key === 'className') {
-      element.className = value;
-    } else if (key === 'dataset') {
-      Object.entries(value).forEach(([dataKey, dataValue]) => {
-        element.dataset[dataKey] = dataValue;
-      });
-    } else if (key.startsWith('on') && typeof value === 'function') {
-      const eventName = key.substring(2).toLowerCase();
-      element.addEventListener(eventName, value);
-    } else {
-      element.setAttribute(key, value);
+  /**
+   * Formats a large number with abbreviations (K, M, B)
+   * @param {number} num Number to format
+   * @returns {string} Formatted number string
+   */
+  formatNumber(num) {
+    if (num >= 1000000000) {
+      return (num / 1000000000).toFixed(1) + 'B';
     }
-  });
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  },
   
-  // Append children
-  if (Array.isArray(children)) {
-    children.forEach(child => {
-      if (child) {
-        appendChild(element, child);
+  /**
+   * Truncates a string to a specified length
+   * @param {string} str String to truncate
+   * @param {number} length Maximum length
+   * @param {string} ellipsis Ellipsis string
+   * @returns {string} Truncated string
+   */
+  truncate(str, length = 100, ellipsis = '...') {
+    if (!str || str.length <= length) {
+      return str;
+    }
+    
+    return str.slice(0, length) + ellipsis;
+  },
+  
+  /**
+   * Debounces a function call
+   * @param {function} func Function to debounce
+   * @param {number} wait Wait time in milliseconds
+   * @returns {function} Debounced function
+   */
+  debounce(func, wait = 300) {
+    let timeout;
+    
+    return function(...args) {
+      const context = this;
+      clearTimeout(timeout);
+      
+      timeout = setTimeout(() => {
+        func.apply(context, args);
+      }, wait);
+    };
+  },
+  
+  /**
+   * Generates a random string
+   * @param {number} length Length of the string
+   * @returns {string} Random string
+   */
+  randomString(length = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    return result;
+  },
+  
+  /**
+   * Parses query parameters from URL
+   * @param {string} url URL to parse
+   * @returns {Object} Query parameters
+   */
+  parseQueryParams(url = window.location.search) {
+    const params = {};
+    const searchParams = new URLSearchParams(url);
+    
+    for (const [key, value] of searchParams.entries()) {
+      params[key] = value;
+    }
+    
+    return params;
+  },
+  
+  /**
+   * Creates a URL with query parameters
+   * @param {string} url Base URL
+   * @param {Object} params Query parameters
+   * @returns {string} URL with query parameters
+   */
+  buildUrl(url, params = {}) {
+    const urlObj = new URL(url, window.location.origin);
+    
+    for (const key in params) {
+      if (params[key] !== undefined && params[key] !== null) {
+        urlObj.searchParams.append(key, params[key]);
       }
-    });
-  } else if (children) {
-    appendChild(element, children);
-  }
+    }
+    
+    return urlObj.toString();
+  },
   
-  return element;
-}
-
-/**
- * Helper function to append a child to an element
- * @param {HTMLElement} parent Parent element
- * @param {Node|string} child Child to append
- */
-function appendChild(parent, child) {
-  if (typeof child === 'string' || typeof child === 'number') {
-    parent.appendChild(document.createTextNode(child));
-  } else if (child instanceof Node) {
-    parent.appendChild(child);
+  /**
+   * Calculates impact metrics from donation amount
+   * @param {number} donationAmount Donation amount in dollars
+   * @param {Object} metrics Impact metrics configuration
+   * @returns {Object} Calculated impact metrics
+   */
+  calculateImpact(donationAmount, metrics = {}) {
+    const defaultMetrics = {
+      dollarsPerMeal: 0.20,
+      mealsPerPerson: 3,
+      poundsPerMeal: 1.2,
+      co2PerPound: 2.5,
+      waterPerPound: 108
+    };
+    
+    const config = { ...defaultMetrics, ...metrics };
+    
+    const meals = donationAmount / config.dollarsPerMeal;
+    const peopleNourished = Math.floor(meals / config.mealsPerPerson);
+    const daysNourished = Math.floor(meals / config.mealsPerPerson / 1);
+    const poundsOfFood = meals * config.poundsPerMeal;
+    const co2Saved = poundsOfFood * config.co2PerPound;
+    const waterSaved = poundsOfFood * config.waterPerPound;
+    
+    return {
+      meals: Math.round(meals),
+      peopleNourished,
+      daysNourished,
+      poundsOfFood: Math.round(poundsOfFood),
+      co2Saved: Math.round(co2Saved),
+      waterSaved: Math.round(waterSaved)
+    };
   }
-}
+};
 
-/**
- * Validates an email address
- * @param {string} email Email to validate
- * @returns {boolean} Whether email is valid
- */
-function isValidEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-/**
- * Format currency amount
- * @param {number} amount Amount to format
- * @returns {string} Formatted currency
- */
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
-}
-
-/**
- * Format number with commas
- * @param {number} num Number to format
- * @returns {string} Formatted number
- */
-function formatNumber(num) {
-  return new Intl.NumberFormat('en-US').format(num);
-}
+// Export the Util object
+window.Util = Util;
